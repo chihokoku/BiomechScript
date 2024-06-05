@@ -5,15 +5,15 @@ function init() {
 
   // レンダラーの設定
   const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
-  const width = 960;
-  const height = 540;
+  const width = 800;
+  const height = 500;
   renderer.setSize(width, height);
 
   // カメラの設定
   const fov = 75;
   const aspect = 2; // the canvas default
   const near = 0.1;
-  const far = 200;
+  const far = 500;
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
   camera.position.z = 100;
 
@@ -41,10 +41,29 @@ function init() {
         const object = objLoader.parse(contents);
         object.position.set(0, 0, 0);
         scene.add(object);
+        // z軸方向の骨の長さを計算
+        calculate_z_length(object);
       };
       reader.readAsText(file);
     }
   });
+
+  function calculate_z_length(object) {
+    const boundingBox = new THREE.Box3().setFromObject(object);
+    const min = boundingBox.min;
+    // 骨の長さはz軸のマイナス方向の値なので絶対値にする処理を施す
+    const z_length = Math.abs(min.z);
+    console.log(z_length);
+  }
+
+  // function doSomethingWithObject(object) {
+  //   if (object) {
+  //     console.log("Object exists and can be used here:", object);
+  //     // ここでobjectに対して何か操作を行う
+  //   } else {
+  //     console.log("Object is not loaded yet.");
+  //   }
+  // }
 
   // 環境光源を作成
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
