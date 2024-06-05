@@ -27,7 +27,6 @@ function init() {
 
   // ファイル入力要素の取得
   const fileInput = document.getElementById("fileInput");
-
   // ファイルが選択されたときの処理
   fileInput.addEventListener("change", function (event) {
     const file = event.target.files[0];
@@ -41,19 +40,32 @@ function init() {
         const object = objLoader.parse(contents);
         object.position.set(0, 0, 0);
         scene.add(object);
-        // z軸方向の骨の長さを計算
-        calculate_z_length(object);
       };
       reader.readAsText(file);
     }
   });
 
+  // ボタン要素の取得
+  const z_length_btn = document.getElementById("z_length_btn");
+  // ボタンがクリックされたときの処理
+  z_length_btn.addEventListener("click", function () {
+    // sceneに追加された最後のオブジェクトを取得
+    const object = scene.children[scene.children.length - 1];
+    if (object) {
+      calculate_z_length(object);
+    } else {
+      console.log("オブジェクトがまだ読み込まれていません。");
+    }
+  });
+  // z軸方向の骨の長さを計算
   function calculate_z_length(object) {
     const boundingBox = new THREE.Box3().setFromObject(object);
     const min = boundingBox.min;
     // 骨の長さはz軸のマイナス方向の値なので絶対値にする処理を施す
     const z_length = Math.abs(min.z);
-    console.log(z_length);
+    // z軸方向の長さをhtmlファイル(ブラウザ)に表示
+    const output_z_length = document.getElementById("z_length");
+    output_z_length.innerHTML = `${z_length.toFixed(4)}`;
   }
 
   // function doSomethingWithObject(object) {
