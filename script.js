@@ -124,9 +124,9 @@ function init() {
   function tick() {
     controls1.update();
     controls2.update();
-    cameraPositionX.innerHTML = `${camera1.position.x.toFixed(2)}`;
-    cameraPositionY.innerHTML = `${camera1.position.y.toFixed(2)}`;
-    cameraPositionZ.innerHTML = `${camera1.position.z.toFixed(2)}`;
+    cameraPositionX.innerHTML = `X:${camera1.position.x.toFixed(2)}`;
+    cameraPositionY.innerHTML = `Y:${camera1.position.y.toFixed(2)}`;
+    cameraPositionZ.innerHTML = `Z:${camera1.position.z.toFixed(2)}`;
     renderer1.render(scene, camera1);
     renderer2.render(scene, camera2);
     requestAnimationFrame(tick);
