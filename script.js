@@ -1,30 +1,45 @@
 window.addEventListener("DOMContentLoaded", init);
 
 function init() {
-  const canvas = document.querySelector("#c");
-
-  // レンダラーの設定
-  const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
-  const width = 800;
-  const height = 500;
-  renderer.setSize(width, height);
-
-  // カメラの設定
-  const fov = 75;
-  const aspect = 2; // the canvas default
-  const near = 0.1;
-  const far = 500;
-  const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  camera.position.z = 100;
-  // camera.position.set(0, 0, 100);
-
   // シーンの設定
   const scene = new THREE.Scene();
 
+  // 表示するcanvas要素の取得
+  const canvas1 = document.querySelector("#canvas1");
+  const canvas2 = document.querySelector("#canvas2");
+
+  // レンダラー1の設定
+  const renderer1 = new THREE.WebGLRenderer({
+    antialias: true,
+    canvas: canvas1,
+  });
+  const width = 800;
+  const height = 500;
+  renderer1.setSize(width, height);
+
+  // レンダラー2の設定
+  const renderer2 = new THREE.WebGLRenderer({
+    antialias: true,
+    canvas: canvas2,
+  });
+  renderer2.setSize(400, 200);
+
+  // カメラ1の設定
+  const fov = 75;
+  const aspect = 2;
+  const near = 0.1;
+  const far = 500;
+  const camera1 = new THREE.PerspectiveCamera(fov, aspect, near, far);
+  camera1.position.set(0, 0, 100);
+
+  // カメラ2の設定
+  const camera2 = new THREE.PerspectiveCamera(fov, aspect, near, far);
+  camera2.position.set(100, 0, -100);
+
   // カメラコントロールができるようにする(オービットコントロールを作成)
-  const controls = new THREE.OrbitControls(camera, canvas);
-  controls.enableDamping = true; // 慣性の有効化
-  controls.dampingFactor = 0.25;
+  const controls1 = new THREE.OrbitControls(camera1, canvas1);
+  controls1.enableDamping = true; // 慣性の有効化
+  controls1.dampingFactor = 0.25;
 
   // カメラ座標を表示するHTML要素を取得
   const cameraPositionX = document.getElementById("cameraPositionX");
@@ -63,6 +78,7 @@ function init() {
       console.log("オブジェクトがまだ読み込まれていません。");
     }
   });
+
   // z軸方向の骨の長さを計算
   function calculate_z_length(object) {
     const boundingBox = new THREE.Box3().setFromObject(object);
@@ -86,20 +102,19 @@ function init() {
 
   // 座標軸の表示
   // new THREE.AxesHelper(軸の長さ);
-  const axis = new THREE.AxesHelper(100);
+  const axis = new THREE.AxesHelper(300);
   scene.add(axis);
 
-  // 画面をレンダリング(アニメーション)
+  tick();
 
+  // 画面をレンダリング(アニメーション)
   function tick() {
-    cameraPositionX.innerHTML = `${camera.position.x.toFixed(2)}`;
-    cameraPositionY.innerHTML = `${camera.position.y.toFixed(2)}`;
-    cameraPositionZ.innerHTML = `${camera.position.z.toFixed(2)}`;
-    // camera.lookAt(new THREE.Vector3(0, 0, -500));
-    renderer.render(scene, camera);
-    controls.update();
+    cameraPositionX.innerHTML = `${camera1.position.x.toFixed(2)}`;
+    cameraPositionY.innerHTML = `${camera1.position.y.toFixed(2)}`;
+    cameraPositionZ.innerHTML = `${camera1.position.z.toFixed(2)}`;
+    renderer1.render(scene, camera1);
+    renderer2.render(scene, camera2);
+    controls1.update();
     requestAnimationFrame(tick);
   }
-
-  tick();
 }
