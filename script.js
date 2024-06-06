@@ -16,6 +16,7 @@ function init() {
   const far = 500;
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
   camera.position.z = 100;
+  // camera.position.set(0, 0, 100);
 
   // シーンの設定
   const scene = new THREE.Scene();
@@ -24,6 +25,11 @@ function init() {
   const controls = new THREE.OrbitControls(camera, canvas);
   controls.enableDamping = true; // 慣性の有効化
   controls.dampingFactor = 0.25;
+
+  // カメラ座標を表示するHTML要素を取得
+  const cameraPositionX = document.getElementById("cameraPositionX");
+  const cameraPositionY = document.getElementById("cameraPositionY");
+  const cameraPositionZ = document.getElementById("cameraPositionZ");
 
   // ファイル入力要素の取得
   const fileInput = document.getElementById("fileInput");
@@ -68,15 +74,6 @@ function init() {
     output_z_length.innerHTML = `${z_length.toFixed(4)}`;
   }
 
-  // function doSomethingWithObject(object) {
-  //   if (object) {
-  //     console.log("Object exists and can be used here:", object);
-  //     // ここでobjectに対して何か操作を行う
-  //   } else {
-  //     console.log("Object is not loaded yet.");
-  //   }
-  // }
-
   // 環境光源を作成
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
@@ -93,11 +90,16 @@ function init() {
   scene.add(axis);
 
   // 画面をレンダリング(アニメーション)
-  tick();
 
   function tick() {
+    cameraPositionX.innerHTML = `${camera.position.x.toFixed(2)}`;
+    cameraPositionY.innerHTML = `${camera.position.y.toFixed(2)}`;
+    cameraPositionZ.innerHTML = `${camera.position.z.toFixed(2)}`;
+    // camera.lookAt(new THREE.Vector3(0, 0, -500));
     renderer.render(scene, camera);
     controls.update();
     requestAnimationFrame(tick);
   }
+
+  tick();
 }
