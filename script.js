@@ -1,6 +1,7 @@
 window.addEventListener("DOMContentLoaded", init);
 
 function init() {
+  let z = 0;
   // シーンの設定
   const scene = new THREE.Scene();
 
@@ -31,10 +32,11 @@ function init() {
   const far = 500;
   const camera1 = new THREE.PerspectiveCamera(fov, aspect, near, far);
   camera1.position.set(0, 0, 100);
+  camera1.lookAt(0, 0, -800);
 
   // カメラ2の設定
   const camera2 = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  camera2.position.set(100, 0, -100);
+  camera2.position.set(100, 100, -100);
 
   // カメラコントロールができるようにする(オービットコントロールを作成)
   const controls1 = new THREE.OrbitControls(camera1, canvas1);
@@ -104,6 +106,22 @@ function init() {
   // new THREE.AxesHelper(軸の長さ);
   const axis = new THREE.AxesHelper(300);
   scene.add(axis);
+
+  // スクロールイベントをキャプチャしてカメラを移動
+  window.addEventListener("wheel", cameraPositionChange);
+  function cameraPositionChange() {
+    camera1.position.z -= window.scrollY;
+    // const scrollY = window.scrollY;
+    // camera1.position.z = 100 - scrollY;
+  }
+
+  // // マウスホイールのスクロールイベントを監視してカメラのZ座標を調整
+  // window.addEventListener("wheel", function (event) {
+  //   const deltaY = event.deltaY;
+  //   // const deltaZ = deltaY * 0.1; // スクロール量に応じてZ座標の変化量を調整
+  //   camera1.position.z -= deltaY;
+  //   console.log("scrolling now");
+  // });
 
   tick();
 
