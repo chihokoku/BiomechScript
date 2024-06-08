@@ -1,0 +1,17 @@
+@charset "UTF-8";
+header {
+  width: 100%;
+  position: fixed;
+  background-color: white;
+  display: flex;
+  border-bottom: 2px solid black;
+}
+main {
+  padding-top: 80px;
+}
+main input {
+  border: 2px solid gray;
+}
+main button {
+  border: 2px solid gray;
+}

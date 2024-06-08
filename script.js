@@ -21,7 +21,7 @@ function init() {
     antialias: true,
     canvas: canvas2,
   });
-  renderer2.setSize(600, 400);
+  renderer2.setSize(800, 500);
   renderer2.localClippingEnabled = true;
 
   // カメラ1の設定
