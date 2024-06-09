@@ -17,35 +17,46 @@
   </head>
   <body>
     <header>
-      <h1>BiomechScript</h1>
-      <input type="file" id="fileInput" accept=".obj" />
+      <div class="inner">
+        <h1>BiomechScript</h1>
+        <nav>
+          <input type="file" id="fileInput" accept=".obj" />
+        </nav>
+      </div>
     </header>
     <main>
-      <div class="box1">
-        <h2>骨の長さを計算する画面</h2>
-        <canvas id="canvas1"></canvas>
-        <div class="z_length">
-          <button id="z_length_btn">calculate z_length</button>
-          <span>z_length=</span><span id="z_length"></span>
-        </div>
-        <div class="cameraPosition">
-          <span>カメラ座標</span>
-          <span id="cameraPositionX"></span>
-          <span id="cameraPositionY"></span>
-          <span id="cameraPositionZ"></span>
-        </div>
+      <div class="wrapper">
+        <section class="zLength">
+          <h2>骨の長さを計算する画面</h2>
+          <canvas id="canvas1"></canvas>
+          <div class="calculateLength">
+            <button id="z_length_btn">calculate z_length</button>
+            <span>z_length=</span><span id="z_length"></span>
+          </div>
+          <div class="cameraPosition">
+            <span>カメラ座標</span>
+            <span id="cameraPositionX"></span>
+            <span id="cameraPositionY"></span>
+            <span id="cameraPositionZ"></span>
+          </div>
+        </section>
+
+        <section class="clipping">
+          <h2>断面を取得する画面</h2>
+          <canvas id="canvas2"></canvas>
+          <div class="position">
+            <label for="zPosition">Z Position(正の値):</label>
+            <input type="number" id="zPosition" value="0" step="0.1" />
+            <button id="clipButton">Show Cross Section</button>
+          </div>
+        </section>
+
+        <section class="crossSection">
+          <h2>近位方向から見た断面図</h2>
+          <canvas id="canvas3" width="400" height="400"></canvas>
+          <button id="calculateArea">calculate area</button>
+        </section>
       </div>
-      <div class="box2">
-        <h2>断面を取得する画面</h2>
-        <canvas id="canvas2"></canvas>
-      </div>
-      <div>
-        <label for="zPosition">Z Position(正の値):</label>
-        <input type="number" id="zPosition" value="0" step="0.1" />
-        <button id="clipButton">Show Cross Section</button>
-      </div>
-      <canvas id="canvas3" width="400" height="400"></canvas>
-      <button id="calculateArea">calculate area</button>
     </main>
   </body>
 </html>
