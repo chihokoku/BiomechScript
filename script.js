@@ -195,14 +195,8 @@ function init() {
 
   // クリップされたエッジを取得する関数
   function getClippedEdges(geometry, plane) {
-    // if (!geometry.attributes || !geometry.index) {
-    //   console.error("Geometry does not have attributes or index");
-    //   return [];
-    // }
-
     const positions = geometry.attributes.position.array;
     const indices = geometry.index ? geometry.index.array : null;
-    console.log(indices);
     const clippedEdges = [];
     if (indices) {
       // インデックスがある場合の処理
@@ -288,48 +282,105 @@ function init() {
     }
   }
 
-  // distanceToPoint メソッドを追加
-  // THREE.Plane.prototype.distanceToPoint = function (point) {
-  //   return this.normal.dot(point) + this.constant;
-  // };
-
   // クリップされたエッジをキャンバスに描画する関数
   function drawClippedEdgesOnCanvas(edges, canvas) {
-    console.log(edges);
-    if (!canvas || !canvas.getContext) {
-      console.error(
-        "Canvas element is not available or does not support 2D context"
-      );
-      return;
-    }
-
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 10;
+    ctx.lineWidth = 3;
 
-    // キャンバスの中心座標を計算
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+    // キャンバスの中心に描画するためのオフセット
+    const offsetX = canvas.width / 2;
+    const offsetY = canvas.height / 2;
+    const scale = 5; // スケールを調整して描画
 
+    // 軸を描画
+    drawAxesOnCanvas(ctx, offsetX, offsetY, canvas.width, canvas.height);
+
+    ctx.strokeStyle = "#000000"; //黒色
     ctx.beginPath();
-    for (let i = 0; i < edges.length; i++) {
-      const p1 = edges[i];
-      // const p2 = edges[(i + 1) % edges.length];
-      const p2 = edges[i][1];
-
-      // 断面の座標をキャンバスの中心に変換
-      const x1 = centerX + p1.x;
-      const y1 = centerY + p1.y;
-      const x2 = centerX + p2.x;
-      const y2 = centerY + p2.y;
-
-      // ctx.moveTo(p1.x, p1.y);
-      // ctx.lineTo(p2.x, p2.y);
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-    }
+    edges.forEach((edge) => {
+      const [p1, p2] = edge;
+      ctx.moveTo(p1.x * scale + offsetX, -p1.y * scale + offsetY);
+      ctx.lineTo(p2.x * scale + offsetX, -p2.y * scale + offsetY);
+    });
     ctx.stroke();
+
+    // 断面の面積を計算して表示;
+    const area = calculatePolygonArea(edges);
+    console.log("断面の面積:", area);
+    ctx.fillStyle = "#000000"; // 面積テキストの色
+    ctx.font = "20px Arial";
+    ctx.fillText(`Area: ${area.toFixed(2)}`, 10, 30);
+  }
+
+  // x軸とy軸を描画する関数
+  function drawAxesOnCanvas(ctx, offsetX, offsetY, width, height) {
+    // x軸
+    ctx.strokeStyle = "#FF0000"; // 赤色
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, offsetY);
+    ctx.lineTo(width, offsetY);
+    ctx.stroke();
+
+    // y軸
+    ctx.strokeStyle = "#00FF00"; // 緑色
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(offsetX, 0);
+    ctx.lineTo(offsetX, height);
+    ctx.stroke();
+  }
+
+  // document.getElementById("calculateArea").addEventListener("click", () => {
+  //   if (scene2) {
+  //     const clippedEdges = getClippedEdges(scene2.geometry, clipPlane);
+  //     const canvas = document.getElementById("canvas3");
+  //     const area = calculatePolygonArea(clippedEdges, canvas);
+  //     console.log("断面の面積:", area);
+  //   }
+  // });
+
+  // ポリゴンの面積を計算する関数
+  function calculatePolygonArea(edges) {
+    // function calculatePolygonArea(edges, canvas) {
+    if (edges.length < 3) return 0; // ポリゴンが形成されていない場合
+    let area = 0;
+    const vertices = [];
+    edges.forEach((edge) => {
+      vertices.push(edge[0], edge[1]);
+    });
+
+    // vertices配列を2D座標配列に変換
+    const points = vertices.map((vertex) => ({ x: vertex.x, y: vertex.y }));
+
+    // シューの公式でポリゴンの面積を計算
+    for (let i = 0; i < points.length; i++) {
+      const j = (i + 1) % points.length;
+      area += points[i].x * points[j].y - points[j].x * points[i].y;
+    }
+    return Math.abs(area) / 2;
+    // surfaceArea = Math.abs(area) / 2;
+
+    // ポリゴンを塗りつぶす;
+    // const ctx = canvas.getContext("2d");
+    // const offsetX = canvas.width / 2;
+    // const offsetY = canvas.height / 2;
+    // const scale = 5;
+
+    // ctx.fillStyle = "#000000"; // ポリゴンの塗りつぶし色
+    // ctx.beginPath();
+    // points.forEach((point, index) => {
+    //   if (index === 0) {
+    //     ctx.moveTo(point.x * scale + offsetX, -point.y * scale + offsetY);
+    //   } else {
+    //     ctx.lineTo(point.x * scale + offsetX, -point.y * scale + offsetY);
+    //   }
+    // });
+    // ctx.closePath();
+    // ctx.fill();
+
+    // return surfaceArea;
   }
 
   tick();
