@@ -15,3 +15,6 @@ main input {
 main button {
   border: 2px solid gray;
 }
+main #canvas3 {
+  border: 2px solid black;
+}

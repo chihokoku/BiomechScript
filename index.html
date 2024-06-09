@@ -6,6 +6,7 @@
     <title>BiomechScript</title>
     <!-- 以下の1行を追加でthree.jsが使える -->
     <script src="https://unpkg.com/three@0.147.0/build/three.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script> -->
     <!-- 以下の一行でカメラのズームイン・アウト、回転ができるようになる -->
     <script src="https://unpkg.com/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
     <!-- objファイルを表示させるためのCDN -->
@@ -43,7 +44,8 @@
         <input type="number" id="zPosition" value="0" step="0.1" />
         <button id="clipButton">Show Cross Section</button>
       </div>
-      <canvas id="canvas3"></canvas>
+      <canvas id="canvas3" width="400" height="400"></canvas>
+      <button id="area">calculate area</button>
     </main>
   </body>
 </html>
