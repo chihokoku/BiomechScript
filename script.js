@@ -1,11 +1,6 @@
 window.addEventListener("DOMContentLoaded", init);
 
 function init() {
-  // if (!THREE.Plane.prototype.distanceToPoint) {
-  //   THREE.Plane.prototype.distanceToPoint = function (point) {
-  //     return this.normal.dot(point) + this.constant;
-  //   };
-  // }
   // シーンの設定
   const scene1 = new THREE.Scene();
   const scene2 = new THREE.Scene();
@@ -97,38 +92,6 @@ function init() {
         object2 = objLoader.parse(contents);
         object1.position.set(0, 0, 0);
         scene1.add(object1);
-        // object2.traverse((child) => {
-        //   if (child.isMesh) {
-        //     const geometry = new THREE.BufferGeometry();
-
-        //     // positions
-        //     const positions = new Float32Array(
-        //       child.geometry.vertices.length * 3
-        //     );
-        //     for (let i = 0; i < child.geometry.vertices.length; i++) {
-        //       positions[i * 3] = child.geometry.vertices[i].x;
-        //       positions[i * 3 + 1] = child.geometry.vertices[i].y;
-        //       positions[i * 3 + 2] = child.geometry.vertices[i].z;
-        //     }
-        //     geometry.setAttribute(
-        //       "position",
-        //       new THREE.BufferAttribute(positions, 3)
-        //     );
-
-        //     // indices
-        //     const indices = [];
-        //     for (let i = 0; i < child.geometry.faces.length; i++) {
-        //       indices.push(
-        //         child.geometry.faces[i].a,
-        //         child.geometry.faces[i].b,
-        //         child.geometry.faces[i].c
-        //       );
-        //     }
-        //     geometry.setIndex(indices);
-
-        //     child.geometry = geometry; // 新しいBufferGeometryを設定
-        //   }
-        // });
         object2.position.set(0, 0, 0);
         scene2.add(object2);
       };
@@ -168,6 +131,7 @@ function init() {
   //   // return z;
   // });
 
+  let clippedEdges = [];
   // 断面を取得する
   let clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
   const planeHelper = new THREE.PlaneHelper(clipPlane, 70, 0xff0000);
@@ -177,14 +141,13 @@ function init() {
   function updateClipPlane() {
     const zPosition = parseFloat(document.getElementById("zPosition").value);
     clipPlane.constant = zPosition;
-    // console.log(object2);
     scene2.traverse((child) => {
       if (child.isMesh) {
         child.material.clippingPlanes = [clipPlane];
         child.material.clipIntersection = true;
 
         // クリッピングされたエッジを取得
-        const clippedEdges = getClippedEdges(child.geometry, clipPlane);
+        clippedEdges = getClippedEdges(child.geometry, clipPlane);
         drawClippedEdgesOnCanvas(
           clippedEdges,
           document.getElementById("canvas3")
@@ -197,7 +160,7 @@ function init() {
   function getClippedEdges(geometry, plane) {
     const positions = geometry.attributes.position.array;
     const indices = geometry.index ? geometry.index.array : null;
-    const clippedEdges = [];
+    clippedEdges = [];
     if (indices) {
       // インデックスがある場合の処理
       for (let i = 0; i < indices.length; i += 3) {
@@ -304,13 +267,6 @@ function init() {
       ctx.lineTo(p2.x * scale + offsetX, -p2.y * scale + offsetY);
     });
     ctx.stroke();
-
-    // 断面の面積を計算して表示;
-    const area = calculatePolygonArea(edges);
-    console.log("断面の面積:", area);
-    ctx.fillStyle = "#000000"; // 面積テキストの色
-    ctx.font = "20px Arial";
-    ctx.fillText(`Area: ${area.toFixed(2)}`, 10, 30);
   }
 
   // x軸とy軸を描画する関数
@@ -332,55 +288,51 @@ function init() {
     ctx.stroke();
   }
 
-  // document.getElementById("calculateArea").addEventListener("click", () => {
-  //   if (scene2) {
-  //     const clippedEdges = getClippedEdges(scene2.geometry, clipPlane);
-  //     const canvas = document.getElementById("canvas3");
-  //     const area = calculatePolygonArea(clippedEdges, canvas);
-  //     console.log("断面の面積:", area);
-  //   }
-  // });
+  const areaButton = document.getElementById("calculateArea");
+  areaButton.addEventListener("click", () => {
+    calculatePolygonArea(clippedEdges, document.getElementById("canvas3"));
+  });
 
   // ポリゴンの面積を計算する関数
-  function calculatePolygonArea(edges) {
-    // function calculatePolygonArea(edges, canvas) {
+  function calculatePolygonArea(edges, canvas) {
     if (edges.length < 3) return 0; // ポリゴンが形成されていない場合
     let area = 0;
     const vertices = [];
+
     edges.forEach((edge) => {
       vertices.push(edge[0], edge[1]);
     });
 
-    // vertices配列を2D座標配列に変換
+    // vertices配列を2D座標配列に変換;
     const points = vertices.map((vertex) => ({ x: vertex.x, y: vertex.y }));
 
-    // シューの公式でポリゴンの面積を計算
+    // シューの公式でポリゴンの面積を計算;
     for (let i = 0; i < points.length; i++) {
       const j = (i + 1) % points.length;
       area += points[i].x * points[j].y - points[j].x * points[i].y;
     }
-    return Math.abs(area) / 2;
-    // surfaceArea = Math.abs(area) / 2;
 
     // ポリゴンを塗りつぶす;
-    // const ctx = canvas.getContext("2d");
-    // const offsetX = canvas.width / 2;
-    // const offsetY = canvas.height / 2;
-    // const scale = 5;
+    let ctx = canvas.getContext("2d");
+    const offsetX = canvas.width / 2;
+    const offsetY = canvas.height / 2;
+    const scale = 5;
 
-    // ctx.fillStyle = "#000000"; // ポリゴンの塗りつぶし色
-    // ctx.beginPath();
-    // points.forEach((point, index) => {
-    //   if (index === 0) {
-    //     ctx.moveTo(point.x * scale + offsetX, -point.y * scale + offsetY);
-    //   } else {
-    //     ctx.lineTo(point.x * scale + offsetX, -point.y * scale + offsetY);
-    //   }
-    // });
-    // ctx.closePath();
-    // ctx.fill();
+    ctx.fillStyle = "#000000"; // ポリゴンの塗りつぶし色
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      if (index === 0) {
+        ctx.moveTo(point.x * scale + offsetX, -point.y * scale + offsetY);
+      } else {
+        ctx.lineTo(point.x * scale + offsetX, -point.y * scale + offsetY);
+      }
+    });
+    ctx.closePath();
+    ctx.fill();
 
-    // return surfaceArea;
+    ctx.fillStyle = "#000000"; // 面積テキストの色
+    ctx.font = "20px Arial";
+    ctx.fillText(`Area: ${area.toFixed(2)}`, 10, 30);
   }
 
   tick();
