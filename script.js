@@ -310,8 +310,8 @@ function init() {
     ctx.fill();
 
     // 20点を取得したら、クリックイベントを無効にする
-    if (points.length >= 25) {
-      alert("over 25 points");
+    if (points.length >= 30) {
+      alert("over 30 points");
       canvas3.removeEventListener("click", arguments.callee);
     }
   });
