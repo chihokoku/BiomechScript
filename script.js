@@ -123,19 +123,14 @@ function init() {
     output_z_length.innerHTML = `${z_length.toFixed(4)}`;
   }
 
-  // // スクロールしてカメラを移動
-  // window.addEventListener("wheel", function (event) {
-  //   const delta = event.deltaY;
-  //   //ここがどうして+なのかわからない
-  //   camera1.position.z += delta;
-  //   // return z;
-  // });
-
+  // 断面の輪郭情報を格納する変数
   let clippedEdges = [];
-  // 断面を取得する
+  // clippingを使用して断面を取得する
   let clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+  // clippingHelperを使用してどこでclippingしてるか可視化する
   const planeHelper = new THREE.PlaneHelper(clipPlane, 70, 0xff0000);
   scene2.add(planeHelper);
+  // ボタンを押したら断面を取得
   const clipButton = document.getElementById("clipButton");
   clipButton.addEventListener("click", updateClipPlane);
   function updateClipPlane() {
@@ -263,6 +258,7 @@ function init() {
     ctx.beginPath();
     edges.forEach((edge) => {
       const [p1, p2] = edge;
+      // キャンバスの中心を原点とした座標系に変換して描画
       ctx.moveTo(p1.x * scale + offsetX, -p1.y * scale + offsetY);
       ctx.lineTo(p2.x * scale + offsetX, -p2.y * scale + offsetY);
     });
@@ -288,51 +284,94 @@ function init() {
     ctx.stroke();
   }
 
-  const areaButton = document.getElementById("calculateArea");
-  areaButton.addEventListener("click", () => {
-    calculatePolygonArea(clippedEdges, document.getElementById("canvas3"));
-  });
+  // クリックで取得した座標を格納する配列
+  const points = [];
 
-  // ポリゴンの面積を計算する関数
-  function calculatePolygonArea(edges, canvas) {
-    if (edges.length < 3) return 0; // ポリゴンが形成されていない場合
-    let area = 0;
-    const vertices = [];
+  // クリックして座標を取得
+  const canvas3 = document.getElementById("canvas3");
+  const ctx = canvas3.getContext("2d");
+  canvas3.addEventListener("click", function (event) {
+    const rect = canvas3.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
 
-    edges.forEach((edge) => {
-      vertices.push(edge[0], edge[1]);
-    });
+    const centerX = x - canvas3.width / 2; // Canvasの中心のX座標
+    const centerY = y - canvas3.height / 2; // Canvasの中心のY座標
 
-    // vertices配列を2D座標配列に変換;
-    const points = vertices.map((vertex) => ({ x: vertex.x, y: vertex.y }));
+    const relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
+    const relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
 
-    // シューの公式でポリゴンの面積を計算;
-    for (let i = 0; i < points.length; i++) {
-      const j = (i + 1) % points.length;
-      area += points[i].x * points[j].y - points[j].x * points[i].y;
-    }
-
-    // ポリゴンを塗りつぶす;
-    let ctx = canvas.getContext("2d");
-    const offsetX = canvas.width / 2;
-    const offsetY = canvas.height / 2;
-    const scale = 5;
-
-    ctx.fillStyle = "#000000"; // ポリゴンの塗りつぶし色
+    points.push({ x: relativeX, y: relativeY });
+    // 赤で円を描画
     ctx.beginPath();
-    points.forEach((point, index) => {
-      if (index === 0) {
-        ctx.moveTo(point.x * scale + offsetX, -point.y * scale + offsetY);
-      } else {
-        ctx.lineTo(point.x * scale + offsetX, -point.y * scale + offsetY);
-      }
-    });
-    ctx.closePath();
+    ctx.arc(x, y, 2, 0, 2 * Math.PI);
+    ctx.fillStyle = "red";
     ctx.fill();
 
-    ctx.fillStyle = "#000000"; // 面積テキストの色
+    // 20点を取得したら、クリックイベントを無効にする
+    if (points.length >= 25) {
+      alert("over 25 points");
+      canvas3.removeEventListener("click", arguments.callee);
+    }
+  });
+
+  // 面積計算ボタンをクリックしたときのイベントリスナー
+  document.getElementById("calculateArea").addEventListener("click", () => {
+    if (points.length < 3) {
+      alert("面積を計算するには少なくとも3点が必要です。");
+      return;
+    }
+
+    // スプライン補間
+    const spline = new THREE.SplineCurve(
+      points.map((p) => new THREE.Vector2(p.x, p.y))
+    );
+    const splinePoints = spline.getPoints(100); // スプライン曲線上の100点を取得
+
+    // キャンバスをクリアしてスプライン曲線を描画
+    ctx.clearRect(0, 0, canvas3.width, canvas3.height);
+    ctx.beginPath();
+
+    const scale = 5;
+    const offsetX = canvas3.width / 2;
+    const offsetY = canvas3.height / 2;
+
+    ctx.moveTo(
+      splinePoints[0].x * scale + offsetX,
+      -splinePoints[0].y * scale + offsetY
+    );
+    splinePoints.forEach((point) => {
+      ctx.lineTo(point.x * scale + offsetX, -point.y * scale + offsetY);
+    });
+    ctx.closePath();
+
+    // スプライン曲線で囲まれた領域を黒く塗りつぶす
+    ctx.fillStyle = "black";
+    ctx.fill();
+    ctx.stroke();
+
+    // 面積計算 (シューズ・メーカーのアルゴリズム)
+    const area = calculateArea(splinePoints);
+    console.log("輪郭の面積:", area);
+
+    // 面積を画面に表示
     ctx.font = "20px Arial";
+    ctx.fillStyle = "black";
     ctx.fillText(`Area: ${area.toFixed(2)}`, 10, 30);
+  });
+
+  // 面積計算の関数
+  function calculateArea(points) {
+    let area = 0;
+    const n = points.length;
+
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      area += points[i].x * points[j].y;
+      area -= points[j].x * points[i].y;
+    }
+
+    return Math.abs(area / 2);
   }
 
   tick();
