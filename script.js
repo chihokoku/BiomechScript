@@ -301,6 +301,8 @@ function init() {
     const relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
     const relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
 
+    console.log(relativeX, relativeY);
+
     points.push({ x: relativeX, y: relativeY });
     // 赤で円を描画
     ctx.beginPath();
@@ -321,7 +323,6 @@ function init() {
       alert("面積を計算するには少なくとも3点が必要です。");
       return;
     }
-
     // スプライン補間
     const spline = new THREE.SplineCurve(
       points.map((p) => new THREE.Vector2(p.x, p.y))
@@ -354,10 +355,17 @@ function init() {
     const area = calculateArea(splinePoints);
     console.log("輪郭の面積:", area);
 
-    // 面積を画面に表示
+    // 断面二次モーメント計算
+    const momentOfInertia = calculateMomentOfInertia(splinePoints);
+    console.log("断面二次モーメント:", momentOfInertia);
+
+    // 面積と断面二次モーメントを画面に表示
     ctx.font = "20px Arial";
     ctx.fillStyle = "black";
     ctx.fillText(`Area: ${area.toFixed(2)}`, 10, 30);
+    ctx.fillText(`Ix: ${momentOfInertia.Ix.toFixed(2)}`, 10, 60);
+    ctx.fillText(`Iy: ${momentOfInertia.Iy.toFixed(2)}`, 10, 90);
+    ctx.fillText(`Ixy: ${momentOfInertia.Ixy.toFixed(2)}`, 10, 110);
   });
 
   // 面積計算の関数
@@ -370,8 +378,34 @@ function init() {
       area += points[i].x * points[j].y;
       area -= points[j].x * points[i].y;
     }
-
     return Math.abs(area / 2);
+  }
+
+  // 断面二次モーメント計算の関数
+  function calculateMomentOfInertia(points) {
+    let Ix = 0;
+    let Iy = 0;
+    let Ixy = 0;
+    const n = points.length;
+
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      const x0 = points[i].x;
+      const y0 = points[i].y;
+      const x1 = points[j].x;
+      const y1 = points[j].y;
+
+      const a = x0 * y1 - x1 * y0;
+      Ix += (y0 * y0 + y0 * y1 + y1 * y1) * a;
+      Iy += (x0 * x0 + x0 * x1 + x1 * x1) * a;
+      Ixy += (x0 * y1 + 2 * x0 * y0 + 2 * x1 * y1 + x1 * y0) * a;
+    }
+
+    Ix = Math.abs(Ix / 12);
+    Iy = Math.abs(Iy / 12);
+    Ixy = Math.abs(Ixy / 24);
+
+    return { Ix, Iy, Ixy };
   }
 
   tick();
