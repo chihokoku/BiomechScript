@@ -368,7 +368,7 @@ function init() {
     ctx.stroke();
   });
 
-  document.getElementById("calculate").addEventListener("click", () => {
+  document.getElementById("area").addEventListener("click", () => {
     // 面積計算 (シューズ・メーカーのアルゴリズム)
     const area = calculateArea(splinePoints);
     console.log("輪郭の面積:", area);
@@ -424,6 +424,44 @@ function init() {
     Ixy = Math.abs(Ixy / 24);
 
     return { Ix, Iy, Ixy };
+  }
+
+  document.getElementById("fourierDescriptor").addEventListener("click", () => {
+    const Z = dft(splinePoints);
+    console.log(Z); // フーリエディスクリプターをコンソールに出力
+    drawFourierDescriptors(Z);
+  });
+
+  // 離散フーリエ変換 (DFT)
+  function dft(points) {
+    const N = points.length;
+    const Z = [];
+    for (let k = 0; k < N; k++) {
+      let real = 0;
+      let imag = 0;
+      for (let n = 0; n < N; n++) {
+        const angle = (2 * Math.PI * k * n) / N;
+        real += points[n].x * Math.cos(angle) + points[n].y * Math.sin(angle);
+        imag += points[n].y * Math.cos(angle) - points[n].x * Math.sin(angle);
+      }
+      Z.push({ real: real / N, imag: imag / N });
+    }
+    return Z;
+  }
+
+  // フーリエディスクリプターのプロット
+  function drawFourierDescriptors(Z) {
+    ctx.clearRect(0, 0, canvas3.width, canvas3.height);
+    ctx.beginPath();
+    ctx.moveTo(
+      canvas3.width / 2 + Z[0].real * 5,
+      canvas3.height / 2 - Z[0].imag * 5
+    );
+    for (const z of Z) {
+      ctx.lineTo(canvas3.width / 2 + z.real, canvas3.height / 2 - z.imag);
+    }
+    ctx.closePath();
+    ctx.stroke();
   }
 
   tick();
