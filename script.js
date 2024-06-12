@@ -284,21 +284,22 @@ function init() {
   }
 
   // クリックで取得した座標を格納する配列
-  const points = [];
+  let points = [];
 
   // クリックして座標を取得
   const canvas3 = document.getElementById("canvas3");
   const ctx = canvas3.getContext("2d");
-  canvas3.addEventListener("click", function (event) {
+  canvas3.addEventListener("click", getCoordinates);
+  function getCoordinates(event) {
     const rect = canvas3.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
 
-    const centerX = x - canvas3.width / 2; // Canvasの中心のX座標
-    const centerY = y - canvas3.height / 2; // Canvasの中心のY座標
+    let centerX = x - canvas3.width / 2; // Canvasの中心のX座標
+    let centerY = y - canvas3.height / 2; // Canvasの中心のY座標
 
-    const relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
-    const relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
+    let relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
+    let relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
 
     console.log(relativeX, relativeY);
 
@@ -309,16 +310,32 @@ function init() {
     ctx.fillStyle = "red";
     ctx.fill();
 
-    // 20点を取得したら、クリックイベントを無効にする
+    // 30点を取得したらalertを出す
     if (points.length >= 30) {
-      alert("over 30 points");
-      canvas3.removeEventListener("click", arguments.callee);
+      alert("over 30 points and you can click 5 sec later.");
+      disableClickEvent();
     }
-  });
+  }
 
+  // 5秒間クリックできないようにする
+  function disableClickEvent() {
+    canvas3.removeEventListener("click", arguments.callee);
+    setTimeout(() => {
+      canvas3.addEventListener("click", arguments.callee);
+    }, 5000); // 5秒後にクリックイベントを再度有効にする
+  }
+
+  const reset = document.getElementById("resetCoordinates");
+  reset.addEventListener("click", resetCoordinates);
+  function resetCoordinates() {
+    points.length = 0; // points配列を空にする
+    ctx.clearRect(0, 0, canvas3.width, canvas3.height); // キャンバスをクリアする
+  }
+
+  let splinePoints;
   // 面積計算ボタンをクリックしたときのイベントリスナー
-  document.getElementById("calculateArea").addEventListener("click", () => {
-    if (points.length < 3) {
+  document.getElementById("splineStart").addEventListener("click", () => {
+    if (points.length < 30) {
       alert("面積を計算するには少なくとも3点が必要です。");
       return;
     }
@@ -326,7 +343,7 @@ function init() {
     const spline = new THREE.SplineCurve(
       points.map((p) => new THREE.Vector2(p.x, p.y))
     );
-    const splinePoints = spline.getPoints(100); // スプライン曲線上の100点を取得
+    splinePoints = spline.getPoints(100); // スプライン曲線上の100点を取得
 
     // キャンバスをクリアしてスプライン曲線を描画
     ctx.clearRect(0, 0, canvas3.width, canvas3.height);
@@ -349,16 +366,18 @@ function init() {
     ctx.fillStyle = "black";
     ctx.fill();
     ctx.stroke();
+  });
 
+  document.getElementById("calculate").addEventListener("click", () => {
     // 面積計算 (シューズ・メーカーのアルゴリズム)
     const area = calculateArea(splinePoints);
     console.log("輪郭の面積:", area);
 
-    // 断面二次モーメント計算
+    // 断面二次モーメント計算;
     const momentOfInertia = calculateMomentOfInertia(splinePoints);
     console.log("断面二次モーメント:", momentOfInertia);
 
-    // 面積と断面二次モーメントを画面に表示
+    // 面積と断面二次モーメントを画面に表示;
     ctx.font = "20px Arial";
     ctx.fillStyle = "black";
     ctx.fillText(`Area: ${area.toFixed(2)}`, 10, 30);
