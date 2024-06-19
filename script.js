@@ -307,72 +307,159 @@ function init() {
     ctx.arc(x, y, 2, 0, 2 * Math.PI);
     ctx.fillStyle = "red";
     ctx.fill();
+    console.log(points);
+    return points;
 
     // 20点を取得したら、クリックイベントを無効にする
-    if (points.length >= 25) {
-      alert("over 25 points");
-      canvas3.removeEventListener("click", arguments.callee);
-    }
+    // if (points.length >= 25) {
+    //   alert("over 25 points");
+    //   canvas3.removeEventListener("click", arguments.callee);
+    // }
   });
 
-  // 面積計算ボタンをクリックしたときのイベントリスナー
-  document.getElementById("calculateArea").addEventListener("click", () => {
-    if (points.length < 3) {
-      alert("面積を計算するには少なくとも3点が必要です。");
+  const getContour = document.getElementById("getContour");
+  getContour.addEventListener("click", function () {
+    if (points.length < 1) {
+      alert("Please click on canvas");
       return;
     }
+    const lastPoint = points[points.length - 1]; // 最後のクリックされた点を取得
+    const closestContour = findClosestContour(lastPoint, clippedEdges);
 
-    // スプライン補間
-    const spline = new THREE.SplineCurve(
-      points.map((p) => new THREE.Vector2(p.x, p.y))
-    );
-    const splinePoints = spline.getPoints(100); // スプライン曲線上の100点を取得
-
-    // キャンバスをクリアしてスプライン曲線を描画
-    ctx.clearRect(0, 0, canvas3.width, canvas3.height);
-    ctx.beginPath();
-
-    const scale = 5;
-    const offsetX = canvas3.width / 2;
-    const offsetY = canvas3.height / 2;
-
-    ctx.moveTo(
-      splinePoints[0].x * scale + offsetX,
-      -splinePoints[0].y * scale + offsetY
-    );
-    splinePoints.forEach((point) => {
-      ctx.lineTo(point.x * scale + offsetX, -point.y * scale + offsetY);
-    });
-    ctx.closePath();
-
-    // スプライン曲線で囲まれた領域を黒く塗りつぶす
-    ctx.fillStyle = "black";
-    ctx.fill();
-    ctx.stroke();
-
-    // 面積計算 (シューズ・メーカーのアルゴリズム)
-    const area = calculateArea(splinePoints);
-    console.log("輪郭の面積:", area);
-
-    // 面積を画面に表示
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "black";
-    ctx.fillText(`Area: ${area.toFixed(2)}`, 10, 30);
+    if (closestContour !== null) {
+      console.log("Closest Contour:", closestContour);
+      const orderedContour = orderContourPoints(closestContour);
+      console.log(orderedContour);
+      drawContour(ctx, orderedContour);
+    } else {
+      console.log("No contour found.");
+    }
   });
 
-  // 面積計算の関数
-  function calculateArea(points) {
-    let area = 0;
-    const n = points.length;
+  function findClosestContour(clickPoint, contours) {
+    let minDistance = Infinity;
+    let closestContour = null;
 
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n;
-      area += points[i].x * points[j].y;
-      area -= points[j].x * points[i].y;
+    contours.forEach((contour) => {
+      contour.forEach((vertex) => {
+        const dist = distance(clickPoint, vertex);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestContour = contour;
+        }
+      });
+    });
+
+    return closestContour;
+  }
+
+  // 2つの点の間の距離を計算する関数
+  function distance(p1, p2) {
+    return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+  }
+
+  // 順不同の輪郭点を順序付ける関数
+  // ここがうまく機能してない
+  function orderContourPoints(points) {
+    if (points.length <= 1) return points;
+
+    const ordered = [points[0]];
+    const remaining = points.slice(1);
+
+    while (remaining.length > 0) {
+      let minDistance = Infinity;
+      let minIndex = -1;
+      for (let i = 0; i < remaining.length; i++) {
+        const dist = distance(ordered[ordered.length - 1], remaining[i]);
+        if (dist < minDistance) {
+          minDistance = dist;
+          minIndex = i;
+        }
+      }
+      ordered.push(remaining.splice(minIndex, 1)[0]);
     }
 
-    return Math.abs(area / 2);
+    return ordered;
   }
+
+  // 輪郭を描画する関数
+  function drawContour(ctx, contour) {
+    ctx.clearRect(0, 0, canvas3.width, canvas3.height); // 既存の描画をクリア
+    ctx.beginPath();
+    ctx.strokeStyle = "blue";
+    ctx.moveTo(
+      canvas3.width / 2 + contour[0].x * 5,
+      canvas3.height / 2 - contour[0].y * 5
+    );
+    contour.forEach((vertex, index) => {
+      if (index > 0) {
+        ctx.lineTo(
+          canvas3.width / 2 + vertex.x * 5,
+          canvas3.height / 2 - vertex.y * 5
+        );
+      }
+    });
+    ctx.closePath();
+    ctx.stroke();
+  }
+  // 面積計算ボタンをクリックしたときのイベントリスナー
+  // document.getElementById("calculateArea").addEventListener("click", () => {
+  //   if (points.length < 3) {
+  //     alert("面積を計算するには少なくとも3点が必要です。");
+  //     return;
+  //   }
+
+  //   // スプライン補間
+  //   const spline = new THREE.SplineCurve(
+  //     points.map((p) => new THREE.Vector2(p.x, p.y))
+  //   );
+  //   const splinePoints = spline.getPoints(100); // スプライン曲線上の100点を取得
+
+  //   // キャンバスをクリアしてスプライン曲線を描画
+  //   ctx.clearRect(0, 0, canvas3.width, canvas3.height);
+  //   ctx.beginPath();
+
+  //   const scale = 5;
+  //   const offsetX = canvas3.width / 2;
+  //   const offsetY = canvas3.height / 2;
+
+  //   ctx.moveTo(
+  //     splinePoints[0].x * scale + offsetX,
+  //     -splinePoints[0].y * scale + offsetY
+  //   );
+  //   splinePoints.forEach((point) => {
+  //     ctx.lineTo(point.x * scale + offsetX, -point.y * scale + offsetY);
+  //   });
+  //   ctx.closePath();
+
+  //   // スプライン曲線で囲まれた領域を黒く塗りつぶす
+  //   ctx.fillStyle = "black";
+  //   ctx.fill();
+  //   ctx.stroke();
+
+  //   // 面積計算 (シューズ・メーカーのアルゴリズム)
+  //   const area = calculateArea(splinePoints);
+  //   console.log("輪郭の面積:", area);
+
+  //   // 面積を画面に表示
+  //   ctx.font = "20px Arial";
+  //   ctx.fillStyle = "black";
+  //   ctx.fillText(`Area: ${area.toFixed(2)}`, 10, 30);
+  // });
+
+  // // 面積計算の関数
+  // function calculateArea(points) {
+  //   let area = 0;
+  //   const n = points.length;
+
+  //   for (let i = 0; i < n; i++) {
+  //     const j = (i + 1) % n;
+  //     area += points[i].x * points[j].y;
+  //     area -= points[j].x * points[i].y;
+  //   }
+
+  //   return Math.abs(area / 2);
+  // }
 
   tick();
 
