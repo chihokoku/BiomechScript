@@ -37,6 +37,9 @@ header .inner {
 .wrapper .clipping .position input {
   border-bottom: 2px solid gray;
 }
+.wrapper .crossSection {
+  display: flex;
+}
 .wrapper .crossSection #canvas3 {
   border: 2px solid black;
 }/*# sourceMappingURL=style.css.map */

@@ -147,6 +147,7 @@ function init() {
           clippedEdges,
           document.getElementById("canvas3")
         );
+        console.log("輪郭点", clippedEdges);
       }
     });
   }
@@ -227,7 +228,6 @@ function init() {
     }
     return clippedEdges;
   }
-
   // 辺の交点をチェックする関数
   function checkEdge(vA, vB, plane, intersectionPoints) {
     const dA = plane.distanceToPoint(vA);
@@ -307,158 +307,166 @@ function init() {
     ctx.arc(x, y, 2, 0, 2 * Math.PI);
     ctx.fillStyle = "red";
     ctx.fill();
+    displayCoordinates();
     console.log(points);
     return points;
-
-    // 20点を取得したら、クリックイベントを無効にする
-    // if (points.length >= 25) {
-    //   alert("over 25 points");
-    //   canvas3.removeEventListener("click", arguments.callee);
-    // }
   });
 
+  // 座標を表示する関数
+  const coordinates = document.getElementById("coordinates");
+  function displayCoordinates() {
+    if (points.length > 0) {
+      const latestPoint = points[points.length - 1];
+      coordinates.innerHTML = `Latest Point: x=${latestPoint.x.toFixed(
+        3
+      )}, y=${latestPoint.y.toFixed(3)}`;
+    }
+  }
+
+  // getContourボタンを押したら実行する
   const getContour = document.getElementById("getContour");
   getContour.addEventListener("click", function () {
-    if (points.length < 1) {
-      alert("Please click on canvas");
-      return;
+    let maxYPoint = clippedEdges[0];
+    for (let i = 1; i < clippedEdges.length; i++) {
+      if (clippedEdges[i].y > maxYPoint.y) {
+        maxYPoint = clippedEdges[i];
+      }
     }
-    const lastPoint = points[points.length - 1]; // 最後のクリックされた点を取得
-    const closestContour = findClosestContour(lastPoint, clippedEdges);
-
-    if (closestContour !== null) {
-      console.log("Closest Contour:", closestContour);
-      const orderedContour = orderContourPoints(closestContour);
-      console.log(orderedContour);
-      drawContour(ctx, orderedContour);
-    } else {
-      console.log("No contour found.");
-    }
+    findClosestArray(maxYPoint, clippedEdges);
+    console.log("y座標が最も大きい点:", maxYPoint);
   });
 
-  function findClosestContour(clickPoint, contours) {
+  // 3次元座標間の距離を計算する関数
+  function distance3D(point1, point2) {
+    return Math.sqrt(
+      Math.pow(point1.x - point2.x, 2) +
+        Math.pow(point1.y - point2.y, 2) +
+        Math.pow(point1.z - point2.z, 2)
+    );
+  }
+
+  // 外輪郭を形成する点を格納する
+  let outContour = [];
+  // 配列Aから最も近い配列Bを探す関数
+  function findClosestArray(arrayA, clippedEdges) {
     let minDistance = Infinity;
-    let closestContour = null;
 
-    contours.forEach((contour) => {
-      contour.forEach((vertex) => {
-        const dist = distance(clickPoint, vertex);
-        if (dist < minDistance) {
-          minDistance = dist;
-          closestContour = contour;
-        }
-      });
-    });
+    // 最初の始点
+    const [start1, start2] = arrayA;
+    let [a1, a2] = arrayA;
 
-    return closestContour;
+    while (true) {
+      let A = 0;
+      [a1, a2] = findClosestpoint(minDistance, arrayA, [a1, a2]);
+      A++;
+      if (A >= 1000 || (a1 === start1 && a2 === start2)) {
+        console.log("ループを終了します");
+        console.log("外輪郭を形成する点", outContour);
+        break;
+      }
+    }
   }
 
-  // 2つの点の間の距離を計算する関数
-  function distance(p1, p2) {
-    return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
-  }
+  function findClosestpoint(minDis, array, [a1, a2]) {
+    let closestEdge = null; // 最も近いエッジを格納する変数
 
-  // 順不同の輪郭点を順序付ける関数
-  // ここがうまく機能してない
-  function orderContourPoints(points) {
-    if (points.length <= 1) return points;
+    clippedEdges.forEach((edge) => {
+      // arrayは探索開始点
+      //arrayとedgeが同じ配列でないことを確認
+      if (array !== edge) {
+        let [b1, b2] = edge;
 
-    const ordered = [points[0]];
-    const remaining = points.slice(1);
+        // arrayAの各点とedgeの各点の距離を計算
+        let distances = [
+          distance3D(a1, b1),
+          distance3D(a1, b2),
+          distance3D(a2, b1),
+          distance3D(a2, b2),
+        ];
 
-    while (remaining.length > 0) {
-      let minDistance = Infinity;
-      let minIndex = -1;
-      for (let i = 0; i < remaining.length; i++) {
-        const dist = distance(ordered[ordered.length - 1], remaining[i]);
-        if (dist < minDistance) {
-          minDistance = dist;
-          minIndex = i;
+        // 最小の距離を取得
+        let minEdgeDistance = Math.min(...distances);
+
+        if (minEdgeDistance < minDis) {
+          minDis = minEdgeDistance;
+          closestEdge = edge; // 最も近いエッジを更新
+          outContour.push(closestEdge);
         }
       }
-      ordered.push(remaining.splice(minIndex, 1)[0]);
-    }
-
-    return ordered;
+    });
+    // if (closestEdge) {
+    //   outContour.push(closestEdge); // 最も近いエッジをoutContourに追加
+    // }
+    return [a1, a2];
   }
+  // // 外輪郭を形成する一点の配列Aを取得する関数
+  // function getOuterContour(clippedEdges) {
+  //   let outerContour = null;
+  //   let maxDistance = -Infinity; // 最大距離を負の無限大で初期化
+
+  //   // 外輪郭を形成する一点の配列を探索
+  //   for (let i = 0; i < clippedEdges.length; i++) {
+  //     const currentContour = clippedEdges[i];
+  //     // ここで外輪郭を特定する条件を設定する（例えば、y座標が最大である、特定の範囲内にある等）
+  //     // 仮にここではy座標が最大であるという条件で外輪郭を特定する例を示す
+  //     const maxYPoint = currentContour.reduce((acc, point) => {
+  //       return point.y > acc.y ? point : acc;
+  //     });
+
+  //     // 外輪郭を形成する一点の配列として最も適したものを選択
+  //     if (maxYPoint) {
+  //       // ここで外輪郭を形成する条件を設定する（例えば、最大距離が最も大きい点を選択する）
+  //       const distance = calculateDistance(maxYPoint, currentContour);
+  //       if (distance > maxDistance) {
+  //         maxDistance = distance;
+  //         outerContour = currentContour;
+  //       }
+  //     }
+  //   }
+
+  //   return outerContour;
+  // }
+
+  // // 与えられた点と輪郭の距離を計算する関数
+  // function calculateDistance(pointA, contourB) {
+  //   let minDistance = Infinity;
+
+  //   contourB.forEach((pointB) => {
+  //     const dist = distance(pointA, pointB);
+  //     if (dist < minDistance) {
+  //       minDistance = dist;
+  //     }
+  //   });
+
+  //   return minDistance;
+  // }
+
+  // // 2つの点の間の距離を計算する関数
+  // function distance(p1, p2) {
+  //   return Math.sqrt(
+  //     (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2 + (p1.z - p2.z) ** 2
+  //   );
+  // }
 
   // 輪郭を描画する関数
-  function drawContour(ctx, contour) {
-    ctx.clearRect(0, 0, canvas3.width, canvas3.height); // 既存の描画をクリア
-    ctx.beginPath();
-    ctx.strokeStyle = "blue";
-    ctx.moveTo(
-      canvas3.width / 2 + contour[0].x * 5,
-      canvas3.height / 2 - contour[0].y * 5
-    );
-    contour.forEach((vertex, index) => {
-      if (index > 0) {
-        ctx.lineTo(
-          canvas3.width / 2 + vertex.x * 5,
-          canvas3.height / 2 - vertex.y * 5
-        );
-      }
-    });
-    ctx.closePath();
-    ctx.stroke();
-  }
-  // 面積計算ボタンをクリックしたときのイベントリスナー
-  // document.getElementById("calculateArea").addEventListener("click", () => {
-  //   if (points.length < 3) {
-  //     alert("面積を計算するには少なくとも3点が必要です。");
-  //     return;
-  //   }
-
-  //   // スプライン補間
-  //   const spline = new THREE.SplineCurve(
-  //     points.map((p) => new THREE.Vector2(p.x, p.y))
-  //   );
-  //   const splinePoints = spline.getPoints(100); // スプライン曲線上の100点を取得
-
-  //   // キャンバスをクリアしてスプライン曲線を描画
-  //   ctx.clearRect(0, 0, canvas3.width, canvas3.height);
+  // function drawContour(ctx, contour) {
+  //   ctx.clearRect(0, 0, canvas3.width, canvas3.height); // 既存の描画をクリア
   //   ctx.beginPath();
-
-  //   const scale = 5;
-  //   const offsetX = canvas3.width / 2;
-  //   const offsetY = canvas3.height / 2;
-
+  //   ctx.strokeStyle = "blue";
   //   ctx.moveTo(
-  //     splinePoints[0].x * scale + offsetX,
-  //     -splinePoints[0].y * scale + offsetY
+  //     canvas3.width / 2 + contour[0].x * 5,
+  //     canvas3.height / 2 - contour[0].y * 5
   //   );
-  //   splinePoints.forEach((point) => {
-  //     ctx.lineTo(point.x * scale + offsetX, -point.y * scale + offsetY);
+  //   contour.forEach((vertex, index) => {
+  //     if (index > 0) {
+  //       ctx.lineTo(
+  //         canvas3.width / 2 + vertex.x * 5,
+  //         canvas3.height / 2 - vertex.y * 5
+  //       );
+  //     }
   //   });
   //   ctx.closePath();
-
-  //   // スプライン曲線で囲まれた領域を黒く塗りつぶす
-  //   ctx.fillStyle = "black";
-  //   ctx.fill();
   //   ctx.stroke();
-
-  //   // 面積計算 (シューズ・メーカーのアルゴリズム)
-  //   const area = calculateArea(splinePoints);
-  //   console.log("輪郭の面積:", area);
-
-  //   // 面積を画面に表示
-  //   ctx.font = "20px Arial";
-  //   ctx.fillStyle = "black";
-  //   ctx.fillText(`Area: ${area.toFixed(2)}`, 10, 30);
-  // });
-
-  // // 面積計算の関数
-  // function calculateArea(points) {
-  //   let area = 0;
-  //   const n = points.length;
-
-  //   for (let i = 0; i < n; i++) {
-  //     const j = (i + 1) % n;
-  //     area += points[i].x * points[j].y;
-  //     area -= points[j].x * points[i].y;
-  //   }
-
-  //   return Math.abs(area / 2);
   // }
 
   tick();
