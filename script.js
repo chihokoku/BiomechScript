@@ -143,10 +143,7 @@ function init() {
 
         // クリッピングされたエッジを取得
         clippedEdges = getClippedEdges(child.geometry, clipPlane);
-        drawClippedEdgesOnCanvas(
-          clippedEdges,
-          document.getElementById("canvas3")
-        );
+        drawOnCanvas(clippedEdges, document.getElementById("canvas3"));
         console.log("輪郭点", clippedEdges);
       }
     });
@@ -241,7 +238,7 @@ function init() {
   }
 
   // クリップされたエッジをキャンバスに描画する関数
-  function drawClippedEdgesOnCanvas(edges, canvas) {
+  function drawOnCanvas(edges, canvas) {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.lineWidth = 3;
@@ -323,7 +320,7 @@ function init() {
     }
   }
 
-  // getContourボタンを押したら実行する
+  // 外輪郭を取得するプログラム
   const getContour = document.getElementById("getContour");
   getContour.addEventListener("click", function () {
     let maxYPoint = clippedEdges[0];
@@ -332,9 +329,106 @@ function init() {
         maxYPoint = clippedEdges[i];
       }
     }
-    findClosestArray(maxYPoint, clippedEdges);
+    const [point1, point2] = maxYPoint;
     console.log("y座標が最も大きい点:", maxYPoint);
+    console.log("x,y", point1, point2);
+    // 外輪郭を形成する点を格納する
+    let outContour = [];
+    let currentPoint = maxYPoint;
+    outContour.push(currentPoint);
+    while (true) {
+      const closestPoint = findClosestPoint(
+        currentPoint,
+        clippedEdges,
+        outContour
+      );
+      // 次の点が見つからない場合は終了
+      if (!closestPoint) {
+        alert("no next closest point");
+        break;
+      }
+      // 見つかった点を outContour に追加
+      outContour.push(closestPoint);
+      // 現在の点を更新
+      currentPoint = closestPoint;
+      // デバッグ出力
+      console.log("現在の点:", currentPoint);
+      console.log("輪郭点の順序:", outContour);
+      // 最初の点に戻った場合は終了
+      if (currentPoint === outContour[0]) break;
+    }
+    console.log("輪郭点の順序:", outContour);
   });
+
+  // 配列Aから最も近い配列Bを探す関数
+  function findClosestPoint(currentPoint, clippedEdges, visitedPoints) {
+    let minDistance = Infinity;
+    let closestPoint = null;
+    clippedEdges.forEach((point) => {
+      // 現在の点自身や既に訪れた点を除外
+      if (point !== currentPoint && !visitedPoints.includes(point)) {
+        // let distance = distance3D(currentPoint, point);
+        let [a1, a2] = currentPoint;
+        let [b1, b2] = point;
+        let distances = [
+          distance3D(a1, b1),
+          distance3D(a1, b2),
+          distance3D(a2, b1),
+          distance3D(a2, b2),
+        ];
+        // 最小の距離を取得
+        let minEdgeDistance = Math.min(...distances);
+        if (minEdgeDistance < minDistance) {
+          minDistance = minEdgeDistance;
+          closestPoint = point;
+        }
+      }
+    });
+    // clippedEdges.forEach(([point1, point2]) => {
+    //   // 各ペアの両方の点を考慮
+    //   [point1, point2].forEach((point) => {
+    //     // 現在の点自身や既に訪れた点を除外
+    //     if (point !== currentPoint && !visitedPoints.includes(point)) {
+    //       const distance = distance3D(currentPoint, point);
+    //       if (distance < minDistance) {
+    //         minDistance = distance;
+    //         closestPoint = point;
+    //       }
+    //     }
+    //   });
+    // });
+    return closestPoint;
+  }
+
+  // function findClosestpoint(minDis, array, [a1, a2], clip) {
+  //   let closestEdge = null; // 最も近いエッジを格納する変数
+
+  //   clip.forEach((edge) => {
+  //     // arrayは探索開始点
+  //     //arrayとedgeが同じ配列でないことを確認
+  //     if (array !== edge) {
+  //       let [b1, b2] = edge;
+
+  //       // arrayAの各点とedgeの各点の距離を計算
+  //       let distances = [
+  //         distance3D(a1, b1),
+  //         distance3D(a1, b2),
+  //         distance3D(a2, b1),
+  //         distance3D(a2, b2),
+  //       ];
+
+  //       // 最小の距離を取得
+  //       let minEdgeDistance = Math.min(...distances);
+
+  //       if (minEdgeDistance < minDis) {
+  //         minDis = minEdgeDistance;
+  //         closestEdge = edge; // 最も近いエッジを更新
+  //         outContour.push(closestEdge);
+  //       }
+  //     }
+  //   });
+  //   return [a1, a2];
+  // }
 
   // 3次元座標間の距離を計算する関数
   function distance3D(point1, point2) {
@@ -344,88 +438,6 @@ function init() {
         Math.pow(point1.z - point2.z, 2)
     );
   }
-
-  // 外輪郭を形成する点を格納する
-  let outContour = [];
-  // 配列Aから最も近い配列Bを探す関数
-  function findClosestArray(arrayA, clippedEdges) {
-    let minDistance = Infinity;
-
-    // 最初の始点
-    const [start1, start2] = arrayA;
-    let [a1, a2] = arrayA;
-
-    while (true) {
-      let A = 0;
-      [a1, a2] = findClosestpoint(minDistance, arrayA, [a1, a2]);
-      A++;
-      if (A >= 1000 || (a1 === start1 && a2 === start2)) {
-        console.log("ループを終了します");
-        console.log("外輪郭を形成する点", outContour);
-        break;
-      }
-    }
-  }
-
-  function findClosestpoint(minDis, array, [a1, a2]) {
-    let closestEdge = null; // 最も近いエッジを格納する変数
-
-    clippedEdges.forEach((edge) => {
-      // arrayは探索開始点
-      //arrayとedgeが同じ配列でないことを確認
-      if (array !== edge) {
-        let [b1, b2] = edge;
-
-        // arrayAの各点とedgeの各点の距離を計算
-        let distances = [
-          distance3D(a1, b1),
-          distance3D(a1, b2),
-          distance3D(a2, b1),
-          distance3D(a2, b2),
-        ];
-
-        // 最小の距離を取得
-        let minEdgeDistance = Math.min(...distances);
-
-        if (minEdgeDistance < minDis) {
-          minDis = minEdgeDistance;
-          closestEdge = edge; // 最も近いエッジを更新
-          outContour.push(closestEdge);
-        }
-      }
-    });
-    // if (closestEdge) {
-    //   outContour.push(closestEdge); // 最も近いエッジをoutContourに追加
-    // }
-    return [a1, a2];
-  }
-  // // 外輪郭を形成する一点の配列Aを取得する関数
-  // function getOuterContour(clippedEdges) {
-  //   let outerContour = null;
-  //   let maxDistance = -Infinity; // 最大距離を負の無限大で初期化
-
-  //   // 外輪郭を形成する一点の配列を探索
-  //   for (let i = 0; i < clippedEdges.length; i++) {
-  //     const currentContour = clippedEdges[i];
-  //     // ここで外輪郭を特定する条件を設定する（例えば、y座標が最大である、特定の範囲内にある等）
-  //     // 仮にここではy座標が最大であるという条件で外輪郭を特定する例を示す
-  //     const maxYPoint = currentContour.reduce((acc, point) => {
-  //       return point.y > acc.y ? point : acc;
-  //     });
-
-  //     // 外輪郭を形成する一点の配列として最も適したものを選択
-  //     if (maxYPoint) {
-  //       // ここで外輪郭を形成する条件を設定する（例えば、最大距離が最も大きい点を選択する）
-  //       const distance = calculateDistance(maxYPoint, currentContour);
-  //       if (distance > maxDistance) {
-  //         maxDistance = distance;
-  //         outerContour = currentContour;
-  //       }
-  //     }
-  //   }
-
-  //   return outerContour;
-  // }
 
   // // 与えられた点と輪郭の距離を計算する関数
   // function calculateDistance(pointA, contourB) {
