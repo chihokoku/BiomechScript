@@ -143,8 +143,9 @@ function init() {
 
         // クリッピングされたエッジを取得
         clippedEdges = getClippedEdges(child.geometry, clipPlane);
+        // let contour = reconstructContour(clippedEdges);
         drawOnCanvas(clippedEdges, document.getElementById("canvas3"), "black");
-        console.log("全輪郭点", clippedEdges);
+        console.log("全輪郭線分", clippedEdges);
       }
     });
   }
@@ -237,6 +238,46 @@ function init() {
     }
   }
 
+  // function reconstructContour(edges) {
+  //   if (edges.length === 0) return [];
+
+  //   const contour = [edges[0]];
+  //   edges.splice(0, 1);
+
+  //   while (edges.length > 0) {
+  //     const lastPoint = contour[contour.length - 1][1]; // 現在の輪郭の最後の点
+  //     let found = false;
+
+  //     for (let i = 0; i < edges.length; i++) {
+  //       const [start, end] = edges[i];
+
+  //       if (
+  //         start.x === lastPoint.x &&
+  //         start.y === lastPoint.y &&
+  //         start.z === lastPoint.z
+  //       ) {
+  //         contour.push(edges[i]);
+  //         edges.splice(i, 1);
+  //         found = true;
+  //         break;
+  //       } else if (
+  //         end.x === lastPoint.x &&
+  //         end.y === lastPoint.y &&
+  //         end.z === lastPoint.z
+  //       ) {
+  //         // エッジを逆にして追加
+  //         contour.push([end, start]);
+  //         edges.splice(i, 1);
+  //         found = true;
+  //         break;
+  //       }
+  //     }
+  //     // 繋がるエッジが見つからなかった場合は輪郭が閉じない
+  //     if (!found) break;
+  //   }
+  //   return contour;
+  // }
+
   // クリップされたエッジをキャンバスに描画する関数
   function drawOnCanvas(edges, canvas, color) {
     const ctx = canvas.getContext("2d");
@@ -319,78 +360,176 @@ function init() {
     }
   }
 
-  // 外輪郭を取得するプログラム
   const getContour = document.getElementById("getContour");
   getContour.addEventListener("click", function () {
-    let maxYPoint = clippedEdges[0];
-    for (let i = 1; i < clippedEdges.length; i++) {
-      if (clippedEdges[i].y > maxYPoint.y) {
-        maxYPoint = clippedEdges[i];
-      }
-    }
-    console.log("y座標が最も大きい点:", maxYPoint);
-    // 外輪郭を形成する点を格納する
-    let outContour = [];
-    let currentPoint = maxYPoint;
-    outContour.push(currentPoint);
-    while (true) {
-      const closestPoint = findClosestPoint(
-        currentPoint,
-        clippedEdges,
-        outContour
-      );
-      // 次の点が見つからない場合は終了
-      if (!closestPoint) {
-        alert("no next closest point");
-        break;
-      }
-      // 見つかった点を outContour に追加
-      outContour.push(closestPoint);
-      // 現在の点を更新
-      currentPoint = closestPoint;
-
-      [m1, m2] = maxYPoint;
-      [c1, c2] = currentPoint;
-
-      // 最初の点に戻った場合は終了
-      if (m1.x === c1.x && m1.y === c1.y && m1.z === c1.z) break;
-    }
-    console.log("輪郭点の順序:", outContour);
-    drawOnCanvas(outContour, document.getElementById("canvas3"), "purple");
+    let contour = reconstructContour(clippedEdges);
+    drawOnCanvas(contour, document.getElementById("canvas3"), "purple");
+    console.log("順序つけられた輪郭線分", contour);
   });
-
-  // 配列Aから最も近い配列Bを探す関数
-  function findClosestPoint(currentPoint, clippedEdges, visitedPoints) {
-    let minDistance = Infinity;
-    let closestPoint = null;
-    clippedEdges.forEach((point) => {
-      // 現在の点自身や既に訪れた点を除外
-      if (point !== currentPoint && !visitedPoints.includes(point)) {
-        let [a1, a2] = currentPoint;
-        let newCurrentPoint = {
-          x: (a1.x + a2.x) / 2,
-          y: (a1.y + a2.y) / 2,
-        };
-        let [b1, b2] = point;
-        let newPoint = {
-          x: (b1.x + b2.x) / 2,
-          y: (b1.y + b2.y) / 2,
-        };
-        let distance = distance3D(newCurrentPoint, newPoint);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestPoint = point;
-        }
-      }
-    });
-    return closestPoint;
-  }
 
   // 3次元座標間の距離を計算する関数
   function distance3D(point1, point2) {
     return Math.sqrt(
-      Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2)
+      Math.pow(point1.x - point2.x, 2) +
+        Math.pow(point1.y - point2.y, 2) +
+        Math.pow(point1.z - point2.z, 2)
     );
+  }
+
+  // 最も近いエッジを探す関数
+  function findClosestEdge(point, edges, visitedEdges) {
+    let minDistance = Infinity;
+    let closestEdge = null;
+
+    edges.forEach(([start, end]) => {
+      // 現在のエッジや既に訪れたエッジを除外
+      if (
+        visitedEdges.has(
+          `${start.x},${start.y},${start.z}-${end.x},${end.y},${end.z}`
+        ) ||
+        visitedEdges.has(
+          `${end.x},${end.y},${end.z}-${start.x},${start.y},${start.z}`
+        )
+      ) {
+        return;
+      }
+
+      const distanceToStart = distance3D(point, start);
+      const distanceToEnd = distance3D(point, end);
+      const minEdgeDistance = Math.min(distanceToStart, distanceToEnd);
+
+      if (minEdgeDistance < minDistance) {
+        minDistance = minEdgeDistance;
+        closestEdge = [start, end];
+      }
+    });
+
+    return closestEdge;
+  }
+
+  // 最大Y座標の点を見つける関数
+  function findMaxYPoint(edges) {
+    let maxYPoint = edges[0][0];
+    edges.forEach(([start, end]) => {
+      if (start.y > maxYPoint.y) maxYPoint = start;
+      if (end.y > maxYPoint.y) maxYPoint = end;
+    });
+    return maxYPoint;
+  }
+
+  // 断面の輪郭を再構成し、繋がっていない線分を補完する関数
+  function reconstructContour(edges) {
+    if (edges.length === 0) return [];
+
+    // 最大Y座標の点を見つける
+    const maxYPoint = findMaxYPoint(edges);
+
+    // 最大Y座標の点を含むエッジを見つける
+    let initialEdgeIndex = edges.findIndex(
+      ([start, end]) =>
+        (start.x === maxYPoint.x &&
+          start.y === maxYPoint.y &&
+          start.z === maxYPoint.z) ||
+        (end.x === maxYPoint.x &&
+          end.y === maxYPoint.y &&
+          end.z === maxYPoint.z)
+    );
+
+    // 見つかったエッジを最初のエッジとして輪郭に追加
+    const initialEdge = edges[initialEdgeIndex];
+    edges.splice(initialEdgeIndex, 1);
+    const contour = [initialEdge];
+
+    // 訪れたエッジを記録するセット
+    const visitedEdges = new Set();
+    visitedEdges.add(
+      `${initialEdge[0].x},${initialEdge[0].y},${initialEdge[0].z}-${initialEdge[1].x},${initialEdge[1].y},${initialEdge[1].z}`
+    );
+    visitedEdges.add(
+      `${initialEdge[1].x},${initialEdge[1].y},${initialEdge[1].z}-${initialEdge[0].x},${initialEdge[0].y},${initialEdge[0].z}`
+    );
+
+    while (edges.length > 0) {
+      const lastPoint = contour[contour.length - 1][1]; // 現在の輪郭の最後の点
+      let found = false;
+
+      for (let i = 0; i < edges.length; i++) {
+        const [start, end] = edges[i];
+
+        if (
+          start.x === lastPoint.x &&
+          start.y === lastPoint.y &&
+          start.z === lastPoint.z
+        ) {
+          contour.push(edges[i]);
+          edges.splice(i, 1);
+          visitedEdges.add(
+            `${start.x},${start.y},${start.z}-${end.x},${end.y},${end.z}`
+          );
+          visitedEdges.add(
+            `${end.x},${end.y},${end.z}-${start.x},${start.y},${start.z}`
+          );
+          found = true;
+          break;
+        } else if (
+          end.x === lastPoint.x &&
+          end.y === lastPoint.y &&
+          end.z === lastPoint.z
+        ) {
+          // エッジを逆にして追加
+          contour.push([end, start]);
+          edges.splice(i, 1);
+          visitedEdges.add(
+            `${start.x},${start.y},${start.z}-${end.x},${end.y},${end.z}`
+          );
+          visitedEdges.add(
+            `${end.x},${end.y},${end.z}-${start.x},${start.y},${start.z}`
+          );
+          found = true;
+          break;
+        }
+      }
+
+      // 繋がるエッジが見つからなかった場合は補完
+      if (!found) {
+        const closestEdge = findClosestEdge(lastPoint, edges, visitedEdges);
+        if (closestEdge) {
+          const [closestStart, closestEnd] = closestEdge;
+          // 最も近い点と現在の点を補完
+          contour.push([lastPoint, closestStart]);
+          contour.push(closestEdge);
+          edges.splice(edges.indexOf(closestEdge), 1);
+          visitedEdges.add(
+            `${closestStart.x},${closestStart.y},${closestStart.z}-${closestEnd.x},${closestEnd.y},${closestEnd.z}`
+          );
+          visitedEdges.add(
+            `${closestEnd.x},${closestEnd.y},${closestEnd.z}-${closestStart.x},${closestStart.y},${closestStart.z}`
+          );
+        } else {
+          break; // 繋がるエッジが見つからない場合はループを終了
+        }
+      }
+
+      // 初期エッジに戻った場合はループを終了
+      const currentEdge = contour[contour.length - 1];
+      if (
+        (currentEdge[0].x === initialEdge[0].x &&
+          currentEdge[0].y === initialEdge[0].y &&
+          currentEdge[0].z === initialEdge[0].z &&
+          currentEdge[1].x === initialEdge[1].x &&
+          currentEdge[1].y === initialEdge[1].y &&
+          currentEdge[1].z === initialEdge[1].z) ||
+        (currentEdge[1].x === initialEdge[0].x &&
+          currentEdge[1].y === initialEdge[0].y &&
+          currentEdge[1].z === initialEdge[0].z &&
+          currentEdge[0].x === initialEdge[1].x &&
+          currentEdge[0].y === initialEdge[1].y &&
+          currentEdge[0].z === initialEdge[1].z)
+      ) {
+        break;
+      }
+    }
+    return contour;
   }
 
   tick();
