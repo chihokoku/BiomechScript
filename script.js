@@ -360,6 +360,7 @@ function init() {
     }
   }
 
+  // 外輪郭探索プログラム
   const getContour = document.getElementById("getContour");
   getContour.addEventListener("click", function () {
     let contour = reconstructContour(clippedEdges);
@@ -383,6 +384,7 @@ function init() {
 
     edges.forEach(([start, end]) => {
       // 現在のエッジや既に訪れたエッジを除外
+      // ここが問題がありそう
       if (
         visitedEdges.has(
           `${start.x},${start.y},${start.z}-${end.x},${end.y},${end.z}`
@@ -393,7 +395,6 @@ function init() {
       ) {
         return;
       }
-
       const distanceToStart = distance3D(point, start);
       const distanceToEnd = distance3D(point, end);
       const minEdgeDistance = Math.min(distanceToStart, distanceToEnd);
