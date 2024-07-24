@@ -333,6 +333,7 @@ function init() {
     drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
     // console.log("順序つけられた輪郭線分", contour);
   });
+
   // 三角形の内部にあるエッジを削除する関数 (z値を無視)
   function removeEdgesInsideTriangle2D(edges, v0, v1, v2) {
     return edges.filter(([start, end]) => {
@@ -344,6 +345,7 @@ function init() {
       return !(startInside || endInside);
     });
   }
+
   // 点が三角形の内部にあるかどうかを判断する関数 (z値を無視)
   function isPointInTriangle2D(point, v0, v1, v2) {
     let alpha =
