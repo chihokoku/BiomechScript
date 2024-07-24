@@ -238,46 +238,6 @@ function init() {
     }
   }
 
-  // function reconstructContour(edges) {
-  //   if (edges.length === 0) return [];
-
-  //   const contour = [edges[0]];
-  //   edges.splice(0, 1);
-
-  //   while (edges.length > 0) {
-  //     const lastPoint = contour[contour.length - 1][1]; // 現在の輪郭の最後の点
-  //     let found = false;
-
-  //     for (let i = 0; i < edges.length; i++) {
-  //       const [start, end] = edges[i];
-
-  //       if (
-  //         start.x === lastPoint.x &&
-  //         start.y === lastPoint.y &&
-  //         start.z === lastPoint.z
-  //       ) {
-  //         contour.push(edges[i]);
-  //         edges.splice(i, 1);
-  //         found = true;
-  //         break;
-  //       } else if (
-  //         end.x === lastPoint.x &&
-  //         end.y === lastPoint.y &&
-  //         end.z === lastPoint.z
-  //       ) {
-  //         // エッジを逆にして追加
-  //         contour.push([end, start]);
-  //         edges.splice(i, 1);
-  //         found = true;
-  //         break;
-  //       }
-  //     }
-  //     // 繋がるエッジが見つからなかった場合は輪郭が閉じない
-  //     if (!found) break;
-  //   }
-  //   return contour;
-  // }
-
   // クリップされたエッジをキャンバスに描画する関数
   function drawOnCanvas(edges, canvas, color) {
     const ctx = canvas.getContext("2d");
@@ -512,20 +472,25 @@ function init() {
       }
 
       // 初期エッジに戻った場合はループを終了
-      const currentEdge = contour[contour.length - 1];
+      // const currentEdge = contour[contour.length - 1];
+      // if (
+      //   (currentEdge[0].x === initialEdge[0].x &&
+      //     currentEdge[0].y === initialEdge[0].y &&
+      //     currentEdge[0].z === initialEdge[0].z &&
+      //     currentEdge[1].x === initialEdge[1].x &&
+      //     currentEdge[1].y === initialEdge[1].y &&
+      //     currentEdge[1].z === initialEdge[1].z) ||
+      //   (currentEdge[1].x === initialEdge[0].x &&
+      //     currentEdge[1].y === initialEdge[0].y &&
+      //     currentEdge[1].z === initialEdge[0].z &&
+      //     currentEdge[0].x === initialEdge[1].x &&
+      //     currentEdge[0].y === initialEdge[1].y &&
+      //     currentEdge[0].z === initialEdge[1].z)
+      // )
       if (
-        (currentEdge[0].x === initialEdge[0].x &&
-          currentEdge[0].y === initialEdge[0].y &&
-          currentEdge[0].z === initialEdge[0].z &&
-          currentEdge[1].x === initialEdge[1].x &&
-          currentEdge[1].y === initialEdge[1].y &&
-          currentEdge[1].z === initialEdge[1].z) ||
-        (currentEdge[1].x === initialEdge[0].x &&
-          currentEdge[1].y === initialEdge[0].y &&
-          currentEdge[1].z === initialEdge[0].z &&
-          currentEdge[0].x === initialEdge[1].x &&
-          currentEdge[0].y === initialEdge[1].y &&
-          currentEdge[0].z === initialEdge[1].z)
+        lastPoint.x === maxYPoint.x &&
+        lastPoint.y === maxYPoint.y &&
+        lastPoint.z === maxYPoint.z
       ) {
         break;
       }
