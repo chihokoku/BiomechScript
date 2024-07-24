@@ -309,6 +309,11 @@ function init() {
     return points;
   });
 
+  const reset = document.getElementById("reset");
+  reset.addEventListener("click", function () {
+    points.length = 0;
+  });
+
   // 座標を表示する関数
   const coordinates = document.getElementById("coordinates");
   function displayCoordinates() {
@@ -320,38 +325,44 @@ function init() {
     }
   }
 
-  // 外輪郭探索プログラム
-  const getContour = document.getElementById("getContour");
-  getContour.addEventListener("click", function () {
-    const filteredEdges = removeEdgesInsideTriangle2D(clippedEdges, ...points);
-    drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "purple");
+  // エッジ削除プログラム
+  let filteredEdges = [];
+  const removeEdges = document.getElementById("removeEdges");
+  removeEdges.addEventListener("click", function () {
+    filteredEdges = removeEdgesInsideTriangle2D(clippedEdges, ...points);
+    drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
     // console.log("順序つけられた輪郭線分", contour);
   });
-
   // 三角形の内部にあるエッジを削除する関数 (z値を無視)
   function removeEdgesInsideTriangle2D(edges, v0, v1, v2) {
     return edges.filter(([start, end]) => {
       // エッジの両端点が三角形の内部にあるかチェック (z値を無視)
-      const startInside = isPointInTriangle2D(start, v0, v1, v2);
-      const endInside = isPointInTriangle2D(end, v0, v1, v2);
+      let startInside = isPointInTriangle2D(start, v0, v1, v2);
+      let endInside = isPointInTriangle2D(end, v0, v1, v2);
 
       // 両端点のいずれかが三角形の内部にある場合は削除
       return !(startInside || endInside);
     });
   }
-
   // 点が三角形の内部にあるかどうかを判断する関数 (z値を無視)
   function isPointInTriangle2D(point, v0, v1, v2) {
-    const alpha =
+    let alpha =
       ((v1.y - v2.y) * (point.x - v2.x) + (v2.x - v1.x) * (point.y - v2.y)) /
       ((v1.y - v2.y) * (v0.x - v2.x) + (v2.x - v1.x) * (v0.y - v2.y));
-    const beta =
+    let beta =
       ((v2.y - v0.y) * (point.x - v2.x) + (v0.x - v2.x) * (point.y - v2.y)) /
       ((v1.y - v2.y) * (v0.x - v2.x) + (v2.x - v1.x) * (v0.y - v2.y));
-    const gamma = 1.0 - alpha - beta;
+    let gamma = 1.0 - alpha - beta;
 
     return alpha > 0 && beta > 0 && gamma > 0;
   }
+
+  // 最近エッジを補間して順序づけられた輪郭にする
+  const getContour = document.getElementById("getContour");
+  getContour.addEventListener("click", function () {
+    let contour = reconstructContour(filteredEdges);
+    drawOnCanvas(contour, document.getElementById("canvas3"), "purple");
+  });
 
   // 3次元座標間の距離を計算する関数
   function distance3D(point1, point2) {
@@ -495,23 +506,6 @@ function init() {
           break; // 繋がるエッジが見つからない場合はループを終了
         }
       }
-
-      // 初期エッジに戻った場合はループを終了
-      // const currentEdge = contour[contour.length - 1];
-      // if (
-      //   (currentEdge[0].x === initialEdge[0].x &&
-      //     currentEdge[0].y === initialEdge[0].y &&
-      //     currentEdge[0].z === initialEdge[0].z &&
-      //     currentEdge[1].x === initialEdge[1].x &&
-      //     currentEdge[1].y === initialEdge[1].y &&
-      //     currentEdge[1].z === initialEdge[1].z) ||
-      //   (currentEdge[1].x === initialEdge[0].x &&
-      //     currentEdge[1].y === initialEdge[0].y &&
-      //     currentEdge[1].z === initialEdge[0].z &&
-      //     currentEdge[0].x === initialEdge[1].x &&
-      //     currentEdge[0].y === initialEdge[1].y &&
-      //     currentEdge[0].z === initialEdge[1].z)
-      // )
       if (
         lastPoint.x === maxYPoint.x &&
         lastPoint.y === maxYPoint.y &&
