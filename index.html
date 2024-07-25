@@ -55,14 +55,21 @@
           <div class="left">
             <h2>近位方向から見た断面図</h2>
             <canvas id="canvas3" width="400" height="400"></canvas>
-            <button id="reset">reset</button>
-            <button id="removeEdges">remove edges</button>
-            <button id="getContour">get contour</button>
+            <div class="btn">
+              <button id="removeEdges">remove edges</button>
+              <button id="getContour">get contour</button>
+              <button id="calculateArea">calculate area</button>
+              <button id="reset">reset</button>
+            </div>
           </div>
           <div class="right">
-            <h2>coordinates</h2>
+            <h2 class="title">・Coordinates</h2>
             <ul>
               <span id="coordinates"></span>
+            </ul>
+            <h2 class="title">・SurfaceArea</h2>
+            <ul>
+              <span id="surfaceArea"></span>
             </ul>
           </div>
         </section>

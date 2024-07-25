@@ -40,6 +40,12 @@ header .inner {
 .wrapper .crossSection {
   display: flex;
 }
+.wrapper .crossSection .left {
+  margin-right: 20%;
+}
 .wrapper .crossSection #canvas3 {
   border: 2px solid black;
+}
+.wrapper .crossSection .right .title {
+  margin-top: 30px;
 }/*# sourceMappingURL=style.css.map */
