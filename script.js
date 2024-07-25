@@ -299,6 +299,7 @@ function init() {
     const relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
 
     points.push({ x: relativeX, y: relativeY });
+    if (points.length > 3) alert("Please push reset ");
     // 赤で円を描画
     ctx.beginPath();
     ctx.arc(x, y, 2, 0, 2 * Math.PI);
@@ -307,11 +308,6 @@ function init() {
     displayCoordinates();
     console.log(points);
     return points;
-  });
-
-  const reset = document.getElementById("reset");
-  reset.addEventListener("click", function () {
-    points.length = 0;
   });
 
   // 座標を表示する関数
@@ -325,13 +321,31 @@ function init() {
     }
   }
 
+  const reset = document.getElementById("reset");
+  reset.addEventListener("click", function () {
+    points.length = 0;
+    coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
+  });
+
   // エッジ削除プログラム
   let filteredEdges = [];
+  let clickCount = 0;
   const removeEdges = document.getElementById("removeEdges");
   removeEdges.addEventListener("click", function () {
-    filteredEdges = removeEdgesInsideTriangle2D(clippedEdges, ...points);
-    drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
-    // console.log("順序つけられた輪郭線分", contour);
+    clickCount++;
+    if (clickCount >= 2) {
+      // 2回目以降のクリックで実行する処理
+      filteredEdges = removeEdgesInsideTriangle2D(filteredEdges, ...points);
+      drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
+      points.length = 0;
+      coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
+    } else {
+      // 1回目のクリックで実行する処理
+      filteredEdges = removeEdgesInsideTriangle2D(clippedEdges, ...points);
+      drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
+      points.length = 0;
+      coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
+    }
   });
 
   // 三角形の内部にあるエッジを削除する関数 (z値を無視)
@@ -421,7 +435,7 @@ function init() {
     if (edges.length === 0) return [];
 
     // 最大Y座標の点を見つける
-    const maxYPoint = findMaxYPoint(edges);
+    let maxYPoint = findMaxYPoint(edges);
 
     // 最大Y座標の点を含むエッジを見つける
     let initialEdgeIndex = edges.findIndex(
@@ -435,7 +449,7 @@ function init() {
     );
 
     // 見つかったエッジを最初のエッジとして輪郭に追加
-    const initialEdge = edges[initialEdgeIndex];
+    let initialEdge = edges[initialEdgeIndex];
     edges.splice(initialEdgeIndex, 1);
     const contour = [initialEdge];
 
