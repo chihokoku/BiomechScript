@@ -143,8 +143,8 @@ function init() {
 
         // クリッピングされたエッジを取得
         clippedEdges = getClippedEdges(child.geometry, clipPlane);
-        // let contour = reconstructContour(clippedEdges);
         drawOnCanvas(clippedEdges, document.getElementById("canvas3"), "black");
+        drawOnCanvas(clippedEdges, document.getElementById("canvas4"), "black");
         console.log("全輪郭線分", clippedEdges);
       }
     });
@@ -282,9 +282,9 @@ function init() {
     ctx.stroke();
   }
 
-  // クリックで取得した座標を格納する配列
+  // canvas3でクリックで取得した座標を格納する配列
   const points = [];
-  // クリックして座標を取得
+  // canvas3でクリックして座標を取得
   const canvas3 = document.getElementById("canvas3");
   const ctx = canvas3.getContext("2d");
   canvas3.addEventListener("click", function (event) {
@@ -305,16 +305,48 @@ function init() {
     ctx.arc(x, y, 2, 0, 2 * Math.PI);
     ctx.fillStyle = "red";
     ctx.fill();
-    displayCoordinates();
+    displayCoordinates(points);
+    console.log(points);
+    // return points;
+  });
+
+  // canvas4でクリックで取得した座標を格納する配列
+  let points2 = [];
+  // canvas4でクリックして座標を取得
+  const canvas4 = document.getElementById("canvas4");
+  const ctx4 = canvas4.getContext("2d");
+  canvas4.addEventListener("click", function (event) {
+    const rect = canvas4.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const centerX = x - canvas4.width / 2; // Canvasの中心のX座標
+    const centerY = y - canvas4.height / 2; // Canvasの中心のY座標
+
+    const relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
+    const relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
+
+    if (points2.length > 10) {
+      alert("over 10 points ");
+    } else {
+      points2.push({ x: relativeX, y: relativeY });
+      console.log("point2", points2);
+    }
+    // 赤で円を描画
+    ctx4.beginPath();
+    ctx4.arc(x, y, 2, 0, 2 * Math.PI);
+    ctx4.fillStyle = "red";
+    ctx4.fill();
+    displayCoordinates(points2);
     console.log(points);
     return points;
   });
 
   // 座標を表示する関数
   const coordinates = document.getElementById("coordinates");
-  function displayCoordinates() {
-    if (points.length > 0) {
-      const latestPoint = points[points.length - 1];
+  function displayCoordinates(point) {
+    if (point.length > 0) {
+      const latestPoint = point[point.length - 1];
       coordinates.innerHTML = `Latest Point: x=${latestPoint.x.toFixed(
         3
       )}, y=${latestPoint.y.toFixed(3)}`;
@@ -340,10 +372,8 @@ function init() {
       drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
     }
     points.length = 0;
-    // console.log(points);
     coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
-    console.log(filteredEdges);
-    // filteredEdges.length = 0;
+    console.log("抽出されたエッジ", filteredEdges);
   });
 
   // 三角形の内部にあるエッジを削除する関数 (z値を無視)
@@ -375,6 +405,7 @@ function init() {
   const reset = document.getElementById("reset");
   reset.addEventListener("click", function () {
     points.length = 0;
+    points2.length = 0;
     coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
     surfaceArea.innerHTML = `surfaceArea: 0.000`;
     clickCount = 0;
@@ -387,6 +418,15 @@ function init() {
         document.getElementById("canvas3").width,
         document.getElementById("canvas3").height
       );
+    document
+      .getElementById("canvas4")
+      .getContext("2d")
+      .clearRect(
+        0,
+        0,
+        document.getElementById("canvas4").width,
+        document.getElementById("canvas4").height
+      );
   });
 
   // getContour関数を実行した時の処理
@@ -397,7 +437,7 @@ function init() {
     drawOnCanvas(filteredContour, document.getElementById("canvas3"), "purple");
   });
 
-  // 3次元座標間の距離を計算する関数
+  // 3次元座標間における2点間の距離を計算する関数
   function distance3D(point1, point2) {
     return Math.sqrt(
       Math.pow(point1.x - point2.x, 2) +
@@ -547,9 +587,11 @@ function init() {
       if (!found) {
         let closestEdge = findClosestEdge(lastPoint, edges, visitedEdges);
         if (closestEdge) {
+          // 現在のエッジから一番近いエッジをclosestEdgeとする
           let [closestStart, closestEnd] = closestEdge;
-          // 最も近い点と現在の点を補完
+          // 現在のエッジの端点lastPointと一番近いエッジの端点closestStartを端点とするエッジを追加(補間)
           contour.push([lastPoint, closestStart]);
+          // さらにclosestEdgeを追加
           contour.push(closestEdge);
           edges.splice(edges.indexOf(closestEdge), 1);
           visitedEdges.add(
@@ -570,6 +612,8 @@ function init() {
         break;
       }
     }
+    console.log("訪れたエッジ", visitedEdges);
+    console.log("輪郭エッジ", contour);
     return contour;
   }
 
@@ -585,7 +629,6 @@ function init() {
       document.getElementById("canvas3")
     );
     surfaceArea.innerHTML = `surfaceArea: ${area.toFixed(3)}`;
-    console.log("clicked area button");
   });
 
   // 面積を計算する関数
@@ -650,8 +693,59 @@ function init() {
     // ctx.fillStyle = "black";
     // ctx.fill();
     area = Math.abs(area) / 2;
-
     return area;
+  }
+
+  // ボタンを押したら楕円近似する
+  const ellipse = document.getElementById("ellipse");
+  ellipse.addEventListener("click", function () {
+    if (points2.length === 10) {
+      let ellipse = fitEllipse(points2);
+      drawEllipse(ellipse);
+    } else {
+      console.log("10個の座標が必要です");
+    }
+  });
+
+  // 楕円近似するプログラム
+  function fitEllipse(points) {
+    if (points.length < 5) {
+      console.error("最低でも5つの点が必要です。");
+      return;
+    }
+
+    // x, y 座標の配列を作成
+    let xs = points.map((p) => p.x);
+    let ys = points.map((p) => p.y);
+
+    // 数値ライブラリに入力するための行列を作成
+    let A = xs.map((x, i) => [x * x, x * y, y * y, x, y, 1]);
+    let B = numeric.add(
+      numeric.mul(numeric.rep([points.length, 1], 0), 1),
+      numeric.rep([points.length, 1], 1)
+    );
+
+    // 行列計算
+    let AT = numeric.transpose(A);
+    let ATA = numeric.dot(AT, A);
+    let ATB = numeric.dot(AT, B);
+    let ellipse = numeric.solve(ATA, ATB);
+
+    return ellipse;
+  }
+
+  // 楕円描画するプログラム
+  function drawEllipse(ellipse) {
+    if (!ellipse) return;
+
+    // 楕円のパラメータを取得
+    // ここでは簡単な例として楕円のパラメータを固定
+    // 実際には H 行列を使用して楕円の詳細なパラメータを求める必要があります
+
+    ctx4.beginPath();
+    ctx4.ellipse(250, 250, 100, 50, 0, 0, 2 * Math.PI);
+    ctx4.strokeStyle = "red";
+    ctx4.stroke();
   }
 
   tick();

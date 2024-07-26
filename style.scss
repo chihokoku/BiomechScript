@@ -51,4 +51,18 @@ header {
       }
     }
   }
+  .ellipse {
+    display: flex;
+    .left {
+      margin-right: 20%;
+    }
+    #canvas4 {
+      border: 2px solid black;
+    }
+    .right {
+      .title {
+        margin-top: 30px;
+      }
+    }
+  }
 }

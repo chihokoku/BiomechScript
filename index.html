@@ -11,6 +11,8 @@
     <script src="https://unpkg.com/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
     <!-- objファイルを表示させるためのCDN -->
     <script src="https://unpkg.com/three@0.147.0/examples/js/loaders/OBJLoader.js"></script>
+    <!-- 行列計算で使用するライブラリを読み込む -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
     <script src="script.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css" />
     <link rel="stylesheet" href="style.css" />
@@ -53,11 +55,32 @@
 
         <section class="crossSection">
           <div class="left">
-            <h2>近位方向から見た断面図</h2>
+            <h2>近位方向から見た断面図(外輪郭計算用)</h2>
             <canvas id="canvas3" width="400" height="400"></canvas>
             <div class="btn">
               <button id="removeEdges">remove edges</button>
               <button id="getContour">get contour</button>
+              <button id="calculateArea">calculate area</button>
+              <button id="reset">reset</button>
+            </div>
+          </div>
+          <div class="right">
+            <h2 class="title">・Coordinates</h2>
+            <ul>
+              <span id="coordinates"></span>
+            </ul>
+            <h2 class="title">・SurfaceArea</h2>
+            <ul>
+              <span id="surfaceArea"></span>
+            </ul>
+          </div>
+        </section>
+        <section class="ellipse">
+          <div class="left">
+            <h2>近位方向から見た断面図(楕円近似用)</h2>
+            <canvas id="canvas4" width="400" height="400"></canvas>
+            <div class="btn">
+              <button id="ellipse">ellipse</button>
               <button id="calculateArea">calculate area</button>
               <button id="reset">reset</button>
             </div>
