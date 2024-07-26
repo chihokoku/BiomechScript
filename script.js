@@ -389,7 +389,7 @@ function init() {
       );
   });
 
-  // 最近エッジを補間して順序づけられた輪郭にする
+  // getContour関数を実行した時の処理
   let filteredContour = [];
   const getContour = document.getElementById("getContour");
   getContour.addEventListener("click", function () {
@@ -446,6 +446,16 @@ function init() {
     return maxYPoint;
   }
 
+  // 最大X座標の点を見つける関数
+  function findMaxXPoint(edges) {
+    let maxXPoint = edges[0][0];
+    edges.forEach(([start, end]) => {
+      if (start.x > maxXPoint.x) maxXPoint = start;
+      if (end.x > maxXPoint.x) maxXPoint = end;
+    });
+    return maxXPoint;
+  }
+
   // 断面の輪郭を再構成し、繋がっていない線分を補完する関数
   function reconstructContour(edges) {
     if (edges.length === 0) return [];
@@ -463,6 +473,20 @@ function init() {
           end.y === maxYPoint.y &&
           end.z === maxYPoint.z)
     );
+
+    // 最大Y座標の点が見つからなかった場合、最大X座標の点を探す
+    if (initialEdgeIndex === -1) {
+      let maxXPoint = findMaxXPoint(edges);
+      initialEdgeIndex = edges.findIndex(
+        ([start, end]) =>
+          (start.x === maxXPoint.x &&
+            start.y === maxXPoint.y &&
+            start.z === maxXPoint.z) ||
+          (end.x === maxXPoint.x &&
+            end.y === maxXPoint.y &&
+            end.z === maxXPoint.z)
+      );
+    }
 
     // 見つかったエッジを最初のエッジとして輪郭に追加
     let initialEdge = edges[initialEdgeIndex];
@@ -521,7 +545,7 @@ function init() {
 
       // 繋がるエッジが見つからなかった場合は補完
       if (!found) {
-        const closestEdge = findClosestEdge(lastPoint, edges, visitedEdges);
+        let closestEdge = findClosestEdge(lastPoint, edges, visitedEdges);
         if (closestEdge) {
           let [closestStart, closestEnd] = closestEdge;
           // 最も近い点と現在の点を補完
