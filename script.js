@@ -307,7 +307,6 @@ function init() {
     ctx.fill();
     displayCoordinates(points);
     console.log(points);
-    // return points;
   });
 
   // canvas4でクリックで取得した座標を格納する配列
@@ -326,7 +325,8 @@ function init() {
     const relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
     const relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
 
-    if (points2.length > 10) {
+    if (points2.length > 9) {
+      //配列が10個以上になったらデジタイズできないようにする。配列は０番目も含まれる
       alert("over 10 points ");
     } else {
       points2.push({ x: relativeX, y: relativeY });
@@ -339,7 +339,6 @@ function init() {
     ctx4.fill();
     displayCoordinates(points2);
     console.log(points);
-    return points;
   });
 
   // 座標を表示する関数
@@ -405,7 +404,6 @@ function init() {
   const reset = document.getElementById("reset");
   reset.addEventListener("click", function () {
     points.length = 0;
-    points2.length = 0;
     coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
     surfaceArea.innerHTML = `surfaceArea: 0.000`;
     clickCount = 0;
@@ -418,6 +416,15 @@ function init() {
         document.getElementById("canvas3").width,
         document.getElementById("canvas3").height
       );
+  });
+
+  // 楕円近似用のresetボタンの処理
+  const reset2 = document.getElementById("reset2");
+  reset2.addEventListener("click", function () {
+    points2.length = 0;
+    coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
+    surfaceArea.innerHTML = `surfaceArea: 0.000`;
+    clickCount = 0;
     document
       .getElementById("canvas4")
       .getContext("2d")
@@ -700,52 +707,67 @@ function init() {
   const ellipse = document.getElementById("ellipse");
   ellipse.addEventListener("click", function () {
     if (points2.length === 10) {
-      let ellipse = fitEllipse(points2);
-      drawEllipse(ellipse);
+      let ellipseParams = fitEllipse(points2);
+      let { width, height } = drawEllipse(ctx4, ellipseParams);
+      let area = calculateEllipseArea(width, height);
+      // drawEllipse(ctx4, ellipseParams);
+      console.log("楕円の面積：", area);
     } else {
       console.log("10個の座標が必要です");
     }
   });
 
-  // 楕円近似するプログラム
+  // 楕円近似の計算
   function fitEllipse(points) {
-    if (points.length < 5) {
-      console.error("最低でも5つの点が必要です。");
-      return;
+    let A = [];
+    let b = [];
+
+    for (let i = 0; i < points.length; i++) {
+      let x = points[i].x;
+      let y = points[i].y;
+      A.push([x * x, x * y, y * y, x, y]);
+      b.push(1);
     }
 
-    // x, y 座標の配列を作成
-    let xs = points.map((p) => p.x);
-    let ys = points.map((p) => p.y);
+    let At = numeric.transpose(A);
+    let AtA = numeric.dot(At, A);
+    let Atb = numeric.dot(At, b);
+    let x = numeric.solve(AtA, Atb);
 
-    // 数値ライブラリに入力するための行列を作成
-    let A = xs.map((x, i) => [x * x, x * y, y * y, x, y, 1]);
-    let B = numeric.add(
-      numeric.mul(numeric.rep([points.length, 1], 0), 1),
-      numeric.rep([points.length, 1], 1)
-    );
-
-    // 行列計算
-    let AT = numeric.transpose(A);
-    let ATA = numeric.dot(AT, A);
-    let ATB = numeric.dot(AT, B);
-    let ellipse = numeric.solve(ATA, ATB);
-
-    return ellipse;
+    return x;
   }
 
-  // 楕円描画するプログラム
-  function drawEllipse(ellipse) {
-    if (!ellipse) return;
+  // 楕円の描画
+  function drawEllipse(ctx, ellipseParams) {
+    // 楕円のパラメータ
+    let [A, B, C, D, E] = ellipseParams;
 
-    // 楕円のパラメータを取得
-    // ここでは簡単な例として楕円のパラメータを固定
-    // 実際には H 行列を使用して楕円の詳細なパラメータを求める必要があります
+    let x0 = -D / (2 * A);
+    let y0 = -E / (2 * C);
+    let numerator = 2 * (A * x0 * x0 + C * y0 * y0 + B * x0 * y0 - 1);
+    let width = Math.sqrt(Math.abs(numerator / A));
+    let height = Math.sqrt(Math.abs(numerator / C));
 
-    ctx4.beginPath();
-    ctx4.ellipse(250, 250, 100, 50, 0, 0, 2 * Math.PI);
-    ctx4.strokeStyle = "red";
-    ctx4.stroke();
+    // キャンバスの中心を原点とした座標系に変換
+    const centerX = ctx.canvas.width / 2;
+    const centerY = ctx.canvas.height / 2;
+
+    ctx.save(); // 現在の描画状態を保存
+    ctx.translate(centerX, centerY); // キャンバスの中心を原点に移動
+    ctx.scale(1, -1); //y座標を反転させるようにスケーリング
+
+    // 楕円の描画
+    ctx.strokeStyle = "blue";
+    ctx.beginPath();
+    ctx.ellipse(x0, y0, width, height, 0, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    return { x0, y0, width, height };
+  }
+
+  // 楕円の面積を計算
+  function calculateEllipseArea(width, height) {
+    return Math.PI * width * height;
   }
 
   tick();
