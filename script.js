@@ -282,6 +282,22 @@ function init() {
     ctx.stroke();
   }
 
+  // 座標をブラウザに表示するためにidをそれぞれ取得
+  const coordinates1 = document.getElementById("coordinates1");
+  const coordinates2 = document.getElementById("coordinates2");
+  // 座標をブラウザに表示する関数
+  function displayCoordinates(point, coordinates) {
+    if (point.length > 0) {
+      const latestPoint = point[point.length - 1];
+      coordinates.innerHTML = `Latest Point: x=${latestPoint.x.toFixed(
+        3
+      )}, y=${latestPoint.y.toFixed(3)}`;
+    }
+  }
+  // 座標値にデフォルト値として入力
+  coordinates1.innerHTML = `Latest Point: x=0.000, y=0.000`;
+  coordinates2.innerHTML = `Latest Point: x=0.000, y=0.000`;
+
   // canvas3でクリックで取得した座標を格納する配列
   const points = [];
   // canvas3でクリックして座標を取得
@@ -305,7 +321,7 @@ function init() {
     ctx.arc(x, y, 2, 0, 2 * Math.PI);
     ctx.fillStyle = "red";
     ctx.fill();
-    displayCoordinates(points);
+    displayCoordinates(points, coordinates1);
     console.log(points);
   });
 
@@ -337,22 +353,9 @@ function init() {
     ctx4.arc(x, y, 2, 0, 2 * Math.PI);
     ctx4.fillStyle = "red";
     ctx4.fill();
-    displayCoordinates(points2);
+    displayCoordinates(points2, coordinates2);
     console.log(points);
   });
-
-  // 座標を表示する関数
-  const coordinates = document.getElementById("coordinates");
-  function displayCoordinates(point) {
-    if (point.length > 0) {
-      const latestPoint = point[point.length - 1];
-      coordinates.innerHTML = `Latest Point: x=${latestPoint.x.toFixed(
-        3
-      )}, y=${latestPoint.y.toFixed(3)}`;
-    }
-  }
-  // 座標値にデフォルト値として入力
-  coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
 
   // エッジ削除プログラム
   let filteredEdges = [];
@@ -404,8 +407,8 @@ function init() {
   const reset = document.getElementById("reset");
   reset.addEventListener("click", function () {
     points.length = 0;
-    coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
-    surfaceArea.innerHTML = `surfaceArea: 0.000`;
+    coordinates1.innerHTML = `Latest Point: x=0.000, y=0.000`;
+    surfaceArea.innerHTML = `0.000`;
     clickCount = 0;
     document
       .getElementById("canvas3")
@@ -422,8 +425,10 @@ function init() {
   const reset2 = document.getElementById("reset2");
   reset2.addEventListener("click", function () {
     points2.length = 0;
-    coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
-    surfaceArea.innerHTML = `surfaceArea: 0.000`;
+    coordinates2.innerHTML = `Latest Point: x=0.000, y=0.000`;
+    ellipseArea.innerHTML = `0.000`;
+    ellipseInertiaX.innerHTML = `0.000`;
+    ellipseInertiaY.innerHTML = `0.000`;
     clickCount = 0;
     document
       .getElementById("canvas4")
@@ -626,7 +631,7 @@ function init() {
 
   // 面積値にデフォルト値として入力
   const surfaceArea = document.getElementById("surfaceArea");
-  surfaceArea.innerHTML = `surfaceArea: 0.000`;
+  surfaceArea.innerHTML = `0.000`;
 
   // 面積を計算するためのボタンを取得
   const Area = document.getElementById("calculateArea");
@@ -681,14 +686,25 @@ function init() {
     return area;
   }
 
+  // 楕円の面積をブラウザに表示
+  const ellipseArea = document.getElementById("ellipseArea");
+  ellipseArea.innerHTML = `0.000`;
+  // 楕円のx軸周りの二次モーメントをブラウザに表示
+  const ellipseInertiaX = document.getElementById("ellipseInertiaX");
+  ellipseInertiaX.innerHTML = `0.000`;
+  // 楕円のy軸周りの二次モーメントをブラウザに表示
+  const ellipseInertiaY = document.getElementById("ellipseInertiaY");
+  ellipseInertiaY.innerHTML = `0.000`;
+
   // ボタンを押したら楕円近似する
   const ellipse = document.getElementById("ellipse");
   ellipse.addEventListener("click", function () {
     if (points2.length === 15) {
       let ellipse = fitEllipse(points2);
-      // let { width, height } = drawEllipse(ctx4, ellipseParams);
-      // let area = calculateEllipseArea(width, height);
-      // drawEllipse(ctx4, ellipse);
+      let area = calculateEllipseArea(ellipse.radiusX, ellipse.radiusY);
+      let I_x = calculateMomentOfInertiaX(ellipse.radiusX, ellipse.radiusY);
+      let I_y = calculateMomentOfInertiaY(ellipse.radiusX, ellipse.radiusY);
+      let [I_x_prime, I_y_prime] = transformMoments(I_x, I_y, ellipse.rotation);
       drawEllipse(
         ctx4,
         ellipse.centerX * 5,
@@ -697,8 +713,13 @@ function init() {
         ellipse.radiusY * 5,
         ellipse.rotation
       );
+      // 面積値をブラウザに表示
+      ellipseArea.innerHTML = `${area.toFixed(3)}`;
+      // 断面二次モーメント値をブラウザに表示
+      ellipseInertiaX.innerHTML = `${I_x_prime.toFixed(3)}`;
+      ellipseInertiaY.innerHTML = `${I_y_prime.toFixed(3)}`;
     } else {
-      console.log("10個の座標が必要です");
+      alert("15個の座標が必要です");
     }
   });
 
@@ -751,6 +772,37 @@ function init() {
     };
   }
 
+  // 楕円の面積を計算;
+  function calculateEllipseArea(width, height) {
+    return Math.PI * width * height;
+  }
+
+  // 楕円の断面二次モーメント I_x を計算する関数
+  function calculateMomentOfInertiaX(a, b) {
+    return (Math.PI * a * Math.pow(b, 3)) / 4;
+  }
+
+  // 楕円の断面二次モーメント I_y を計算する関数
+  function calculateMomentOfInertiaY(a, b) {
+    return (Math.PI * b * Math.pow(a, 3)) / 4;
+  }
+
+  // 楕円の回転を考慮して断面二次モーメントを変換する関数
+  function transformMoments(I_x, I_y, theta) {
+    const cosTheta = Math.cos(theta);
+    const sinTheta = Math.sin(theta);
+
+    const I_x_prime =
+      (I_x * cosTheta ** 4 + I_y * sinTheta ** 4) / 2 +
+      ((I_x - I_y) * sinTheta ** 2 * cosTheta ** 2) / 2;
+
+    const I_y_prime =
+      (I_x * sinTheta ** 4 + I_y * cosTheta ** 4) / 2 +
+      ((I_x - I_y) * sinTheta ** 2 * cosTheta ** 2) / 2;
+
+    return [I_x_prime, I_y_prime];
+  }
+
   // 楕円を描画する関数
   function drawEllipse(ctx, x, y, a, b, rotation) {
     // キャンバスの中心を原点とした座標系に変換
@@ -780,11 +832,6 @@ function init() {
       ctx.fill();
     }
   }
-
-  // 楕円の面積を計算
-  // function calculateEllipseArea(width, height) {
-  //   return Math.PI * width * height;
-  // }
 
   tick();
 
