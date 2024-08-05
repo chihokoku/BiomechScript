@@ -325,9 +325,9 @@ function init() {
     const relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
     const relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
 
-    if (points2.length > 9) {
+    if (points2.length > 14) {
       //配列が10個以上になったらデジタイズできないようにする。配列は０番目も含まれる
-      alert("over 10 points ");
+      alert("over 15 points ");
     } else {
       points2.push({ x: relativeX, y: relativeY });
       console.log("point2", points2);
@@ -677,28 +677,6 @@ function init() {
     });
     ctx.closePath();
     ctx.fill();
-
-    // 2次元に投影された輪郭を生成
-    // let projectedContour = contour.map(([start, end]) => {
-    //   return [
-    //     { x: start.x, y: start.y },
-    //     { x: end.x, y: end.y },
-    //   ];
-    // });
-
-    // シューの公式を用いて2次元の輪郭の面積を計算
-    // let area = 0;
-    // let ctx = canvas.getContext("2d");
-    // ctx.beginPath();
-    // ctx.moveTo(projectedContour[0][0].x * 100, projectedContour[0][0].y * 100);
-
-    // for (let i = 0; i < projectedContour.length; i++) {
-    //   let [start, end] = projectedContour[i];
-    //   area += start.x * end.y - end.x * start.y;
-    // }
-    // ctx.closePath();
-    // ctx.fillStyle = "black";
-    // ctx.fill();
     area = Math.abs(area) / 2;
     return area;
   }
@@ -706,69 +684,107 @@ function init() {
   // ボタンを押したら楕円近似する
   const ellipse = document.getElementById("ellipse");
   ellipse.addEventListener("click", function () {
-    if (points2.length === 10) {
-      let ellipseParams = fitEllipse(points2);
-      let { width, height } = drawEllipse(ctx4, ellipseParams);
-      let area = calculateEllipseArea(width, height);
-      // drawEllipse(ctx4, ellipseParams);
-      console.log("楕円の面積：", area);
+    if (points2.length === 15) {
+      let ellipse = fitEllipse(points2);
+      // let { width, height } = drawEllipse(ctx4, ellipseParams);
+      // let area = calculateEllipseArea(width, height);
+      // drawEllipse(ctx4, ellipse);
+      drawEllipse(
+        ctx4,
+        ellipse.centerX * 5,
+        ellipse.centerY * 5,
+        ellipse.radiusX * 5,
+        ellipse.radiusY * 5,
+        ellipse.rotation
+      );
     } else {
       console.log("10個の座標が必要です");
     }
   });
 
-  // 楕円近似の計算
+  // 楕円近似の関数
   function fitEllipse(points) {
-    let A = [];
-    let b = [];
+    let sumX = 0,
+      sumY = 0,
+      sumXX = 0,
+      sumYY = 0,
+      sumXY = 0;
+    const n = points.length;
 
-    for (let i = 0; i < points.length; i++) {
-      let x = points[i].x;
-      let y = points[i].y;
-      A.push([x * x, x * y, y * y, x, y]);
-      b.push(1);
+    for (let point of points) {
+      sumX += point.x;
+      sumY += point.y;
+      sumXX += point.x * point.x;
+      sumYY += point.y * point.y;
+      sumXY += point.x * point.y;
     }
 
-    let At = numeric.transpose(A);
-    let AtA = numeric.dot(At, A);
-    let Atb = numeric.dot(At, b);
-    let x = numeric.solve(AtA, Atb);
+    const avgX = sumX / n;
+    const avgY = sumY / n;
+    const varX = sumXX / n - avgX * avgX;
+    const varY = sumYY / n - avgY * avgY;
+    const covXY = sumXY / n - avgX * avgY;
 
-    return x;
+    const lambda =
+      (varX + varY) / 2 + Math.sqrt(((varX - varY) / 2) ** 2 + covXY ** 2);
+    const angle = Math.atan2(lambda - varX, covXY);
+
+    const a = Math.sqrt(
+      2 *
+        (varX * Math.cos(angle) ** 2 +
+          2 * covXY * Math.sin(angle) * Math.cos(angle) +
+          varY * Math.sin(angle) ** 2)
+    );
+    const b = Math.sqrt(
+      2 *
+        (varX * Math.sin(angle) ** 2 -
+          2 * covXY * Math.sin(angle) * Math.cos(angle) +
+          varY * Math.cos(angle) ** 2)
+    );
+
+    return {
+      centerX: avgX,
+      centerY: avgY,
+      radiusX: a,
+      radiusY: b,
+      rotation: angle,
+    };
   }
 
-  // 楕円の描画
-  function drawEllipse(ctx, ellipseParams) {
-    // 楕円のパラメータ
-    let [A, B, C, D, E] = ellipseParams;
-
-    let x0 = -D / (2 * A);
-    let y0 = -E / (2 * C);
-    let numerator = 2 * (A * x0 * x0 + C * y0 * y0 + B * x0 * y0 - 1);
-    let width = Math.sqrt(Math.abs(numerator / A));
-    let height = Math.sqrt(Math.abs(numerator / C));
-
+  // 楕円を描画する関数
+  function drawEllipse(ctx, x, y, a, b, rotation) {
     // キャンバスの中心を原点とした座標系に変換
     const centerX = ctx.canvas.width / 2;
     const centerY = ctx.canvas.height / 2;
-
     ctx.save(); // 現在の描画状態を保存
     ctx.translate(centerX, centerY); // キャンバスの中心を原点に移動
-    ctx.scale(1, -1); //y座標を反転させるようにスケーリング
+    ctx.scale(1, 1); // y座標を反転させるようにスケーリング
 
-    // 楕円の描画
-    ctx.strokeStyle = "blue";
     ctx.beginPath();
-    ctx.ellipse(x0, y0, width, height, 0, 0, 2 * Math.PI);
+    ctx.save();
+    ctx.translate(x, -y); // 楕円の中心座標を適切に変換
+    ctx.rotate(-rotation);
+    ctx.scale(a, b);
+    ctx.arc(0, 0, 1, 0, 2 * Math.PI, false);
+    ctx.restore();
+    ctx.strokeStyle = "blue";
     ctx.stroke();
 
-    return { x0, y0, width, height };
+    ctx.restore(); // 描画状態を元に戻す
+
+    // 点を描画
+    ctx.fillStyle = "blue";
+    for (let point of points) {
+      ctx.beginPath();
+      ctx.arc(point.x * 5, -point.y * 5, 3, 0, 2 * Math.PI);
+      ctx.fill();
+    }
   }
 
   // 楕円の面積を計算
-  function calculateEllipseArea(width, height) {
-    return Math.PI * width * height;
-  }
+  // function calculateEllipseArea(width, height) {
+  //   return Math.PI * width * height;
+  // }
 
   tick();
 
