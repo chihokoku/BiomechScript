@@ -142,10 +142,9 @@ function init() {
 
         // クリッピングされたエッジを取得
         clippedEdges = getClippedEdges(child.geometry, clipPlane);
-        drawClippedEdgesOnCanvas(
-          clippedEdges,
-          document.getElementById("canvas3")
-        );
+        drawOnCanvas(clippedEdges, document.getElementById("canvas3"), "black");
+        drawOnCanvas(clippedEdges, document.getElementById("canvas4"), "black");
+        console.log("全輪郭線分", clippedEdges);
       }
     });
   }
@@ -226,7 +225,6 @@ function init() {
     }
     return clippedEdges;
   }
-
   // 辺の交点をチェックする関数
   function checkEdge(vA, vB, plane, intersectionPoints) {
     const dA = plane.distanceToPoint(vA);
@@ -240,7 +238,7 @@ function init() {
   }
 
   // クリップされたエッジをキャンバスに描画する関数
-  function drawClippedEdgesOnCanvas(edges, canvas) {
+  function drawOnCanvas(edges, canvas, color) {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.lineWidth = 3;
@@ -253,10 +251,10 @@ function init() {
     // 軸を描画
     drawAxesOnCanvas(ctx, offsetX, offsetY, canvas.width, canvas.height);
 
-    ctx.strokeStyle = "#000000"; //黒色
+    ctx.strokeStyle = color;
     ctx.beginPath();
     edges.forEach((edge) => {
-      const [p1, p2] = edge;
+      let [p1, p2] = edge;
       // キャンバスの中心を原点とした座標系に変換して描画
       ctx.moveTo(p1.x * scale + offsetX, -p1.y * scale + offsetY);
       ctx.lineTo(p2.x * scale + offsetX, -p2.y * scale + offsetY);
@@ -283,10 +281,25 @@ function init() {
     ctx.stroke();
   }
 
-  // クリックで取得した座標を格納する配列
-  let points = [];
+  // 座標をブラウザに表示するためにidをそれぞれ取得
+  const coordinates1 = document.getElementById("coordinates1");
+  const coordinates2 = document.getElementById("coordinates2");
+  // 座標をブラウザに表示する関数
+  function displayCoordinates(point, coordinates) {
+    if (point.length > 0) {
+      const latestPoint = point[point.length - 1];
+      coordinates.innerHTML = `Latest Point: x=${latestPoint.x.toFixed(
+        3
+      )}, y=${latestPoint.y.toFixed(3)}`;
+    }
+  }
+  // 座標値にデフォルト値として入力
+  coordinates1.innerHTML = `Latest Point: x=0.000, y=0.000`;
+  coordinates2.innerHTML = `Latest Point: x=0.000, y=0.000`;
 
-  // クリックして座標を取得
+  // canvas3でクリックで取得した座標を格納する配列
+  const points = [];
+  // canvas3でクリックして座標を取得
   const canvas3 = document.getElementById("canvas3");
   const ctx = canvas3.getContext("2d");
   canvas3.addEventListener("click", getCoordinates);
@@ -301,129 +314,585 @@ function init() {
     let relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
     let relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
 
-    console.log(relativeX, relativeY);
-
     points.push({ x: relativeX, y: relativeY });
+    if (points.length > 3) alert("Please push reset ");
     // 赤で円を描画
     ctx.beginPath();
     ctx.arc(x, y, 2, 0, 2 * Math.PI);
     ctx.fillStyle = "red";
     ctx.fill();
+    displayCoordinates(points, coordinates1);
+    console.log(points);
+  }
 
-    // 30点を取得したらalertを出す
-    if (points.length >= 30) {
-      alert("over 30 points and you can click 5 sec later.");
-      disableClickEvent();
+  // canvas4でクリックで取得した座標を格納する配列
+  let points2 = [];
+  // canvas4でクリックして座標を取得
+  const canvas4 = document.getElementById("canvas4");
+  const ctx4 = canvas4.getContext("2d");
+  canvas4.addEventListener("click", function (event) {
+    const rect = canvas4.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const centerX = x - canvas4.width / 2; // Canvasの中心のX座標
+    const centerY = y - canvas4.height / 2; // Canvasの中心のY座標
+
+    const relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
+    const relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
+
+    if (points2.length > 14) {
+      //配列が10個以上になったらデジタイズできないようにする。配列は０番目も含まれる
+      alert("over 15 points ");
+    } else {
+      points2.push({ x: relativeX, y: relativeY });
+      console.log("point2", points2);
     }
-  }
+    // 赤で円を描画
+    ctx4.beginPath();
+    ctx4.arc(x, y, 2, 0, 2 * Math.PI);
+    ctx4.fillStyle = "red";
+    ctx4.fill();
+    displayCoordinates(points2, coordinates2);
+    console.log(points);
+  });
 
-  // 5秒間クリックできないようにする
-  function disableClickEvent() {
-    canvas3.removeEventListener("click", arguments.callee);
-    setTimeout(() => {
-      canvas3.addEventListener("click", arguments.callee);
-    }, 5000); // 5秒後にクリックイベントを再度有効にする
-  }
-
-  const reset = document.getElementById("resetCoordinates");
-  reset.addEventListener("click", resetCoordinates);
-  function resetCoordinates() {
-    points.length = 0; // points配列を空にする
-    ctx.clearRect(0, 0, canvas3.width, canvas3.height); // キャンバスをクリアする
-  }
-
-  let splinePoints;
-  // 面積計算ボタンをクリックしたときのイベントリスナー
-  document.getElementById("splineStart").addEventListener("click", () => {
-    if (points.length < 30) {
-      alert("面積を計算するには少なくとも3点が必要です。");
-      return;
+  // エッジ削除プログラム
+  let filteredEdges = [];
+  // let moreFilteredEdges = [];
+  let clickCount = 0;
+  const removeEdges = document.getElementById("removeEdges");
+  removeEdges.addEventListener("click", function () {
+    clickCount++;
+    if (clickCount >= 2) {
+      // 2回目以降のクリックで実行する処理
+      filteredEdges = removeEdgesInsideTriangle2D(filteredEdges, ...points);
+      drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
+    } else {
+      // 1回目のクリックで実行する処理
+      filteredEdges = removeEdgesInsideTriangle2D(clippedEdges, ...points);
+      drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
     }
-    // スプライン補間
-    const spline = new THREE.SplineCurve(
-      points.map((p) => new THREE.Vector2(p.x, p.y))
+    points.length = 0;
+    coordinates1.innerHTML = `Latest Point: x=0.000, y=0.000`;
+    console.log("抽出されたエッジ", filteredEdges);
+  });
+
+  // 三角形の内部にあるエッジを削除する関数 (z値を無視)
+  function removeEdgesInsideTriangle2D(edges, v0, v1, v2) {
+    return edges.filter(([start, end]) => {
+      // エッジの両端点が三角形の内部にあるかチェック (z値を無視)
+      let startInside = isPointInTriangle2D(start, v0, v1, v2);
+      let endInside = isPointInTriangle2D(end, v0, v1, v2);
+
+      // 両端点のいずれかが三角形の内部にある場合は削除
+      return !(startInside || endInside);
+    });
+  }
+
+  // 点が三角形の内部にあるかどうかを判断する関数 (z値を無視)
+  function isPointInTriangle2D(point, v0, v1, v2) {
+    let alpha =
+      ((v1.y - v2.y) * (point.x - v2.x) + (v2.x - v1.x) * (point.y - v2.y)) /
+      ((v1.y - v2.y) * (v0.x - v2.x) + (v2.x - v1.x) * (v0.y - v2.y));
+    let beta =
+      ((v2.y - v0.y) * (point.x - v2.x) + (v0.x - v2.x) * (point.y - v2.y)) /
+      ((v1.y - v2.y) * (v0.x - v2.x) + (v2.x - v1.x) * (v0.y - v2.y));
+    let gamma = 1.0 - alpha - beta;
+
+    return alpha > 0 && beta > 0 && gamma > 0;
+  }
+
+  // resetボタンを押した時の処理
+  const reset = document.getElementById("reset");
+  reset.addEventListener("click", function () {
+    points.length = 0;
+    coordinates1.innerHTML = `Latest Point: x=0.000, y=0.000`;
+    surfaceArea.innerHTML = `0.000`;
+    clickCount = 0;
+    document
+      .getElementById("canvas3")
+      .getContext("2d")
+      .clearRect(
+        0,
+        0,
+        document.getElementById("canvas3").width,
+        document.getElementById("canvas3").height
+      );
+  });
+
+  // 楕円近似用のresetボタンの処理
+  const reset2 = document.getElementById("reset2");
+  reset2.addEventListener("click", function () {
+    points2.length = 0;
+    coordinates2.innerHTML = `Latest Point: x=0.000, y=0.000`;
+    ellipseArea.innerHTML = `0.000`;
+    ellipseInertiaX.innerHTML = `0.000`;
+    ellipseInertiaY.innerHTML = `0.000`;
+    clickCount = 0;
+    document
+      .getElementById("canvas4")
+      .getContext("2d")
+      .clearRect(
+        0,
+        0,
+        document.getElementById("canvas4").width,
+        document.getElementById("canvas4").height
+      );
+  });
+
+  // getContour関数を実行した時の処理
+  let filteredContour = [];
+  const getContour = document.getElementById("getContour");
+  getContour.addEventListener("click", function () {
+    filteredContour = reconstructContour(filteredEdges);
+    drawOnCanvas(filteredContour, document.getElementById("canvas3"), "purple");
+  });
+
+  // 3次元座標間における2点間の距離を計算する関数
+  function distance3D(point1, point2) {
+    return Math.sqrt(
+      Math.pow(point1.x - point2.x, 2) +
+        Math.pow(point1.y - point2.y, 2) +
+        Math.pow(point1.z - point2.z, 2)
     );
-    splinePoints = spline.getPoints(100); // スプライン曲線上の100点を取得
+  }
 
-    // キャンバスをクリアしてスプライン曲線を描画
-    ctx.clearRect(0, 0, canvas3.width, canvas3.height);
-    ctx.beginPath();
+  // 最も近いエッジを探す関数
+  function findClosestEdge(point, edges, visitedEdges) {
+    let minDistance = Infinity;
+    let closestEdge = null;
 
+    edges.forEach(([start, end]) => {
+      // 現在のエッジや既に訪れたエッジを除外
+      if (
+        visitedEdges.has(
+          `${start.x},${start.y},${start.z}-${end.x},${end.y},${end.z}`
+        ) ||
+        visitedEdges.has(
+          `${end.x},${end.y},${end.z}-${start.x},${start.y},${start.z}`
+        )
+      ) {
+        return;
+      }
+      let distanceToStart = distance3D(point, start);
+      let distanceToEnd = distance3D(point, end);
+      let minEdgeDistance = Math.min(distanceToStart, distanceToEnd);
+
+      if (minEdgeDistance < minDistance) {
+        minDistance = minEdgeDistance;
+        closestEdge = [start, end];
+      }
+    });
+
+    return closestEdge;
+  }
+
+  // 最大Y座標の点を見つける関数
+  function findMaxYPoint(edges) {
+    let maxYPoint = edges[0][0];
+    edges.forEach(([start, end]) => {
+      if (start.y > maxYPoint.y) maxYPoint = start;
+      if (end.y > maxYPoint.y) maxYPoint = end;
+    });
+    return maxYPoint;
+  }
+
+  // 最大X座標の点を見つける関数
+  function findMaxXPoint(edges) {
+    let maxXPoint = edges[0][0];
+    edges.forEach(([start, end]) => {
+      if (start.x > maxXPoint.x) maxXPoint = start;
+      if (end.x > maxXPoint.x) maxXPoint = end;
+    });
+    return maxXPoint;
+  }
+
+  // 断面の輪郭を再構成し、繋がっていない線分を補完する関数
+  function reconstructContour(edges) {
+    if (edges.length === 0) return [];
+
+    // 最大Y座標の点を見つける
+    let maxYPoint = findMaxYPoint(edges);
+
+    // 最大Y座標の点を含むエッジを見つける
+    let initialEdgeIndex = edges.findIndex(
+      ([start, end]) =>
+        (start.x === maxYPoint.x &&
+          start.y === maxYPoint.y &&
+          start.z === maxYPoint.z) ||
+        (end.x === maxYPoint.x &&
+          end.y === maxYPoint.y &&
+          end.z === maxYPoint.z)
+    );
+
+    // 最大Y座標の点が見つからなかった場合、最大X座標の点を探す
+    if (initialEdgeIndex === -1) {
+      let maxXPoint = findMaxXPoint(edges);
+      initialEdgeIndex = edges.findIndex(
+        ([start, end]) =>
+          (start.x === maxXPoint.x &&
+            start.y === maxXPoint.y &&
+            start.z === maxXPoint.z) ||
+          (end.x === maxXPoint.x &&
+            end.y === maxXPoint.y &&
+            end.z === maxXPoint.z)
+      );
+    }
+
+    // 見つかったエッジを最初のエッジとして輪郭に追加
+    let initialEdge = edges[initialEdgeIndex];
+    edges.splice(initialEdgeIndex, 1);
+    let contour = [initialEdge];
+
+    // 訪れたエッジを記録するセット
+    const visitedEdges = new Set();
+    visitedEdges.add(
+      `${initialEdge[0].x},${initialEdge[0].y},${initialEdge[0].z}-${initialEdge[1].x},${initialEdge[1].y},${initialEdge[1].z}`
+    );
+    visitedEdges.add(
+      `${initialEdge[1].x},${initialEdge[1].y},${initialEdge[1].z}-${initialEdge[0].x},${initialEdge[0].y},${initialEdge[0].z}`
+    );
+
+    while (edges.length > 0) {
+      let lastPoint = contour[contour.length - 1][1]; // 現在の輪郭の最後の点
+      let found = false;
+
+      for (let i = 0; i < edges.length; i++) {
+        let [start, end] = edges[i];
+
+        if (
+          start.x === lastPoint.x &&
+          start.y === lastPoint.y &&
+          start.z === lastPoint.z
+        ) {
+          contour.push(edges[i]);
+          edges.splice(i, 1);
+          visitedEdges.add(
+            `${start.x},${start.y},${start.z}-${end.x},${end.y},${end.z}`
+          );
+          visitedEdges.add(
+            `${end.x},${end.y},${end.z}-${start.x},${start.y},${start.z}`
+          );
+          found = true;
+          break;
+        } else if (
+          end.x === lastPoint.x &&
+          end.y === lastPoint.y &&
+          end.z === lastPoint.z
+        ) {
+          // エッジを逆にして追加
+          contour.push([end, start]);
+          edges.splice(i, 1);
+          visitedEdges.add(
+            `${start.x},${start.y},${start.z}-${end.x},${end.y},${end.z}`
+          );
+          visitedEdges.add(
+            `${end.x},${end.y},${end.z}-${start.x},${start.y},${start.z}`
+          );
+          found = true;
+          break;
+        }
+      }
+
+      // 繋がるエッジが見つからなかった場合は補完
+      if (!found) {
+        let closestEdge = findClosestEdge(lastPoint, edges, visitedEdges);
+        if (closestEdge) {
+          // 現在のエッジから一番近いエッジをclosestEdgeとする
+          let [closestStart, closestEnd] = closestEdge;
+          // 現在のエッジの端点lastPointと一番近いエッジの端点closestStartを端点とするエッジを追加(補間)
+          contour.push([lastPoint, closestStart]);
+          // さらにclosestEdgeを追加
+          contour.push(closestEdge);
+          edges.splice(edges.indexOf(closestEdge), 1);
+          visitedEdges.add(
+            `${closestStart.x},${closestStart.y},${closestStart.z}-${closestEnd.x},${closestEnd.y},${closestEnd.z}`
+          );
+          visitedEdges.add(
+            `${closestEnd.x},${closestEnd.y},${closestEnd.z}-${closestStart.x},${closestStart.y},${closestStart.z}`
+          );
+        } else {
+          break; // 繋がるエッジが見つからない場合はループを終了
+        }
+      }
+      if (
+        lastPoint.x === maxYPoint.x &&
+        lastPoint.y === maxYPoint.y &&
+        lastPoint.z === maxYPoint.z
+      ) {
+        break;
+      }
+    }
+    console.log("訪れたエッジ", visitedEdges);
+    console.log("輪郭エッジ", contour);
+    return contour;
+  }
+
+  // 面積値にデフォルト値として入力
+  const surfaceArea = document.getElementById("surfaceArea");
+  surfaceArea.innerHTML = `0.000`;
+  const InertiaMomentX = document.getElementById("InertiaMomentX");
+  InertiaMomentX.innerHTML = `0.000`;
+  const InertiaMomentY = document.getElementById("InertiaMomentY");
+  InertiaMomentY.innerHTML = `0.000`;
+
+  // 面積を計算するためのボタンを取得
+  const Area = document.getElementById("calculateArea");
+  Area.addEventListener("click", function () {
+    let { area, vertices } = calculateArea(
+      filteredContour,
+      document.getElementById("canvas3")
+    );
+    let moments = calculateMomentOfInertia(vertices);
+    surfaceArea.innerHTML = `${area.toFixed(3)}`;
+    InertiaMomentX.innerHTML = `${moments.Ixx.toFixed(3)}`;
+    InertiaMomentY.innerHTML = `${moments.Iyy.toFixed(3)}`;
+  });
+
+  // 面積を計算する関数
+  function calculateArea(contour, canvas) {
+    if (contour.length < 3) {
+      console.log("length is less than 3");
+      return 0;
+    }
+
+    let vertices = [];
+    contour.forEach((edge) => {
+      vertices.push(edge[0], edge[1]);
+    });
+
+    // vertices配列を2D座標配列に変換
+    const array = vertices.map((vertex) => ({ x: vertex.x, y: vertex.y }));
+
+    // シューの公式でポリゴンの面積を計算
+    let area = 0;
+    for (let i = 0; i < array.length; i++) {
+      const j = (i + 1) % array.length;
+      area += array[i].x * array[j].y - array[j].x * array[i].y;
+    }
+
+    // ポリゴンを塗りつぶす;
+    const ctx = canvas.getContext("2d");
+    const offsetX = canvas.width / 2;
+    const offsetY = canvas.height / 2;
     const scale = 5;
-    const offsetX = canvas3.width / 2;
-    const offsetY = canvas3.height / 2;
 
-    ctx.moveTo(
-      splinePoints[0].x * scale + offsetX,
-      -splinePoints[0].y * scale + offsetY
-    );
-    splinePoints.forEach((point) => {
-      ctx.lineTo(point.x * scale + offsetX, -point.y * scale + offsetY);
+    ctx.fillStyle = "#000000"; // ポリゴンの塗りつぶし色
+    ctx.beginPath();
+    array.forEach((point, index) => {
+      if (index === 0) {
+        ctx.moveTo(point.x * scale + offsetX, -point.y * scale + offsetY);
+      } else {
+        ctx.lineTo(point.x * scale + offsetX, -point.y * scale + offsetY);
+      }
     });
     ctx.closePath();
-
-    // スプライン曲線で囲まれた領域を黒く塗りつぶす
-    ctx.fillStyle = "black";
     ctx.fill();
-    ctx.stroke();
-  });
-
-  document.getElementById("calculate").addEventListener("click", () => {
-    // 面積計算 (シューズ・メーカーのアルゴリズム)
-    const area = calculateArea(splinePoints);
-    console.log("輪郭の面積:", area);
-
-    // 断面二次モーメント計算;
-    const momentOfInertia = calculateMomentOfInertia(splinePoints);
-    console.log("断面二次モーメント:", momentOfInertia);
-
-    // 面積と断面二次モーメントを画面に表示;
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "black";
-    ctx.fillText(`Area: ${area.toFixed(2)}`, 10, 30);
-    ctx.fillText(`Ix: ${momentOfInertia.Ix.toFixed(2)}`, 10, 60);
-    ctx.fillText(`Iy: ${momentOfInertia.Iy.toFixed(2)}`, 10, 90);
-    ctx.fillText(`Ixy: ${momentOfInertia.Ixy.toFixed(2)}`, 10, 110);
-  });
-
-  // 面積計算の関数
-  function calculateArea(points) {
-    let area = 0;
-    const n = points.length;
-
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n;
-      area += points[i].x * points[j].y;
-      area -= points[j].x * points[i].y;
-    }
-    return Math.abs(area / 2);
+    area = Math.abs(area) / 2;
+    return { area, vertices: array };
   }
 
-  // 断面二次モーメント計算の関数
-  function calculateMomentOfInertia(points) {
-    let Ix = 0;
-    let Iy = 0;
-    let Ixy = 0;
-    const n = points.length;
+  // ポリゴンの重心を計算する関数
+  function calculateCentroid(vertices) {
+    let cx = 0;
+    let cy = 0;
+    let area = 0;
 
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n;
-      const x0 = points[i].x;
-      const y0 = points[i].y;
-      const x1 = points[j].x;
-      const y1 = points[j].y;
+    for (let i = 0; i < vertices.length; i++) {
+      const j = (i + 1) % vertices.length;
+      const xi = vertices[i].x;
+      const yi = vertices[i].y;
+      const xj = vertices[j].x;
+      const yj = vertices[j].y;
 
-      const a = x0 * y1 - x1 * y0;
-      Ix += (y0 * y0 + y0 * y1 + y1 * y1) * a;
-      Iy += (x0 * x0 + x0 * x1 + x1 * x1) * a;
-      Ixy += (x0 * y1 + 2 * x0 * y0 + 2 * x1 * y1 + x1 * y0) * a;
+      const common = xi * yj - xj * yi;
+      cx += (xi + xj) * common;
+      cy += (yi + yj) * common;
+      area += common;
     }
 
-    Ix = Math.abs(Ix / 12);
-    Iy = Math.abs(Iy / 12);
-    Ixy = Math.abs(Ixy / 24);
+    area /= 2;
+    cx /= 6 * area;
+    cy /= 6 * area;
 
-    return { Ix, Iy, Ixy };
+    return { cx, cy, area: Math.abs(area) };
+  }
+
+  // 二次モーメントを計算する関数
+  function calculateMomentOfInertia(vertices) {
+    const centroid = calculateCentroid(vertices);
+    const { cx, cy } = centroid;
+
+    let Ixx = 0;
+    let Iyy = 0;
+    let Ixy = 0;
+
+    for (let i = 0; i < vertices.length; i++) {
+      const j = (i + 1) % vertices.length;
+      const xi = vertices[i].x;
+      const yi = vertices[i].y;
+      const xj = vertices[j].x;
+      const yj = vertices[j].y;
+
+      const common = xi * yj - xj * yi;
+      Ixx += (xi * xi + xi * xj + xj * xj) * common;
+      Iyy += (yi * yi + yi * yj + yj * yj) * common;
+      Ixy += (xi * yj + 2 * xj * yi + xj * yj) * common;
+    }
+
+    Ixx /= 12;
+    Iyy /= 12;
+    Ixy /= 24;
+
+    return { Ixx, Iyy, Ixy };
+  }
+
+  // 楕円の面積をブラウザに表示
+  const ellipseArea = document.getElementById("ellipseArea");
+  ellipseArea.innerHTML = `0.000`;
+  // 楕円のx軸周りの二次モーメントをブラウザに表示
+  const ellipseInertiaX = document.getElementById("ellipseInertiaX");
+  ellipseInertiaX.innerHTML = `0.000`;
+  // 楕円のy軸周りの二次モーメントをブラウザに表示
+  const ellipseInertiaY = document.getElementById("ellipseInertiaY");
+  ellipseInertiaY.innerHTML = `0.000`;
+
+  // ボタンを押したら楕円近似する
+  const ellipse = document.getElementById("ellipse");
+  ellipse.addEventListener("click", function () {
+    if (points2.length === 15) {
+      let ellipse = fitEllipse(points2);
+      let area = calculateEllipseArea(ellipse.radiusX, ellipse.radiusY);
+      let I_x = calculateMomentOfInertiaX(ellipse.radiusX, ellipse.radiusY);
+      let I_y = calculateMomentOfInertiaY(ellipse.radiusX, ellipse.radiusY);
+      let [I_x_prime, I_y_prime] = transformMoments(I_x, I_y, ellipse.rotation);
+      drawEllipse(
+        ctx4,
+        ellipse.centerX * 5,
+        ellipse.centerY * 5,
+        ellipse.radiusX * 5,
+        ellipse.radiusY * 5,
+        ellipse.rotation
+      );
+      // 面積値をブラウザに表示
+      ellipseArea.innerHTML = `${area.toFixed(3)}`;
+      // 断面二次モーメント値をブラウザに表示
+      ellipseInertiaX.innerHTML = `${I_x_prime.toFixed(3)}`;
+      ellipseInertiaY.innerHTML = `${I_y_prime.toFixed(3)}`;
+    } else {
+      alert("15個の座標が必要です");
+    }
+  });
+
+  // 楕円近似の関数
+  function fitEllipse(points) {
+    let sumX = 0,
+      sumY = 0,
+      sumXX = 0,
+      sumYY = 0,
+      sumXY = 0;
+    const n = points.length;
+
+    for (let point of points) {
+      sumX += point.x;
+      sumY += point.y;
+      sumXX += point.x * point.x;
+      sumYY += point.y * point.y;
+      sumXY += point.x * point.y;
+    }
+
+    const avgX = sumX / n;
+    const avgY = sumY / n;
+    const varX = sumXX / n - avgX * avgX;
+    const varY = sumYY / n - avgY * avgY;
+    const covXY = sumXY / n - avgX * avgY;
+
+    const lambda =
+      (varX + varY) / 2 + Math.sqrt(((varX - varY) / 2) ** 2 + covXY ** 2);
+    const angle = Math.atan2(lambda - varX, covXY);
+
+    const a = Math.sqrt(
+      2 *
+        (varX * Math.cos(angle) ** 2 +
+          2 * covXY * Math.sin(angle) * Math.cos(angle) +
+          varY * Math.sin(angle) ** 2)
+    );
+    const b = Math.sqrt(
+      2 *
+        (varX * Math.sin(angle) ** 2 -
+          2 * covXY * Math.sin(angle) * Math.cos(angle) +
+          varY * Math.cos(angle) ** 2)
+    );
+
+    return {
+      centerX: avgX,
+      centerY: avgY,
+      radiusX: a,
+      radiusY: b,
+      rotation: angle,
+    };
+  }
+
+  // 楕円の面積を計算;
+  function calculateEllipseArea(width, height) {
+    return Math.PI * width * height;
+  }
+
+  // 楕円の断面二次モーメント I_x を計算する関数
+  function calculateMomentOfInertiaX(a, b) {
+    return (Math.PI * a * Math.pow(b, 3)) / 4;
+  }
+
+  // 楕円の断面二次モーメント I_y を計算する関数
+  function calculateMomentOfInertiaY(a, b) {
+    return (Math.PI * b * Math.pow(a, 3)) / 4;
+  }
+
+  // 楕円の回転を考慮して断面二次モーメントを変換する関数
+  function transformMoments(I_x, I_y, theta) {
+    const cosTheta = Math.cos(theta);
+    const sinTheta = Math.sin(theta);
+
+    const I_x_prime =
+      (I_x * cosTheta ** 4 + I_y * sinTheta ** 4) / 2 +
+      ((I_x - I_y) * sinTheta ** 2 * cosTheta ** 2) / 2;
+
+    const I_y_prime =
+      (I_x * sinTheta ** 4 + I_y * cosTheta ** 4) / 2 +
+      ((I_x - I_y) * sinTheta ** 2 * cosTheta ** 2) / 2;
+
+    return [I_x_prime, I_y_prime];
+  }
+
+  // 楕円を描画する関数
+  function drawEllipse(ctx, x, y, a, b, rotation) {
+    // キャンバスの中心を原点とした座標系に変換
+    const centerX = ctx.canvas.width / 2;
+    const centerY = ctx.canvas.height / 2;
+    ctx.save(); // 現在の描画状態を保存
+    ctx.translate(centerX, centerY); // キャンバスの中心を原点に移動
+    ctx.scale(1, 1); // y座標を反転させるようにスケーリング
+
+    ctx.beginPath();
+    ctx.save();
+    ctx.translate(x, -y); // 楕円の中心座標を適切に変換
+    ctx.rotate(-rotation);
+    ctx.scale(a, b);
+    ctx.arc(0, 0, 1, 0, 2 * Math.PI, false);
+    ctx.restore();
+    ctx.strokeStyle = "blue";
+    ctx.stroke();
+
+    ctx.restore(); // 描画状態を元に戻す
+
+    // 点を描画
+    ctx.fillStyle = "blue";
+    for (let point of points) {
+      ctx.beginPath();
+      ctx.arc(point.x * 5, -point.y * 5, 3, 0, 2 * Math.PI);
+      ctx.fill();
+    }
   }
 
   tick();

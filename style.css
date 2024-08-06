@@ -37,6 +37,27 @@ header .inner {
 .wrapper .clipping .position input {
   border-bottom: 2px solid gray;
 }
+.wrapper .crossSection {
+  display: flex;
+}
+.wrapper .crossSection .left {
+  margin-right: 20%;
+}
 .wrapper .crossSection #canvas3 {
   border: 2px solid black;
+}
+.wrapper .crossSection .right .title {
+  margin-top: 30px;
+}
+.wrapper .ellipse {
+  display: flex;
+}
+.wrapper .ellipse .left {
+  margin-right: 20%;
+}
+.wrapper .ellipse #canvas4 {
+  border: 2px solid black;
+}
+.wrapper .ellipse .right .title {
+  margin-top: 30px;
 }/*# sourceMappingURL=style.css.map */
