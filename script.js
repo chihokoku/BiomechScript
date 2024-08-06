@@ -31,7 +31,6 @@ function init() {
   const far = 500;
   const camera1 = new THREE.PerspectiveCamera(fov, aspect, near, far);
   camera1.position.set(0, 0, 100);
-  // camera1.lookAt(0, 0, -2000);
 
   // カメラ1のコントロールができるようにする(オービットコントロールを作成)
   const controls1 = new THREE.OrbitControls(camera1, canvas1);
