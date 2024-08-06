@@ -374,7 +374,7 @@ function init() {
       drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
     }
     points.length = 0;
-    coordinates.innerHTML = `Latest Point: x=0.000, y=0.000`;
+    coordinates1.innerHTML = `Latest Point: x=0.000, y=0.000`;
     console.log("抽出されたエッジ", filteredEdges);
   });
 
@@ -632,15 +632,22 @@ function init() {
   // 面積値にデフォルト値として入力
   const surfaceArea = document.getElementById("surfaceArea");
   surfaceArea.innerHTML = `0.000`;
+  const InertiaMomentX = document.getElementById("InertiaMomentX");
+  InertiaMomentX.innerHTML = `0.000`;
+  const InertiaMomentY = document.getElementById("InertiaMomentY");
+  InertiaMomentY.innerHTML = `0.000`;
 
   // 面積を計算するためのボタンを取得
   const Area = document.getElementById("calculateArea");
   Area.addEventListener("click", function () {
-    let area = calculateArea(
+    let { area, vertices } = calculateArea(
       filteredContour,
       document.getElementById("canvas3")
     );
-    surfaceArea.innerHTML = `surfaceArea: ${area.toFixed(3)}`;
+    let moments = calculateMomentOfInertia(vertices);
+    surfaceArea.innerHTML = `${area.toFixed(3)}`;
+    InertiaMomentX.innerHTML = `${moments.Ixx.toFixed(3)}`;
+    InertiaMomentY.innerHTML = `${moments.Iyy.toFixed(3)}`;
   });
 
   // 面積を計算する関数
@@ -683,7 +690,62 @@ function init() {
     ctx.closePath();
     ctx.fill();
     area = Math.abs(area) / 2;
-    return area;
+    return { area, vertices: array };
+  }
+
+  // ポリゴンの重心を計算する関数
+  function calculateCentroid(vertices) {
+    let cx = 0;
+    let cy = 0;
+    let area = 0;
+
+    for (let i = 0; i < vertices.length; i++) {
+      const j = (i + 1) % vertices.length;
+      const xi = vertices[i].x;
+      const yi = vertices[i].y;
+      const xj = vertices[j].x;
+      const yj = vertices[j].y;
+
+      const common = xi * yj - xj * yi;
+      cx += (xi + xj) * common;
+      cy += (yi + yj) * common;
+      area += common;
+    }
+
+    area /= 2;
+    cx /= 6 * area;
+    cy /= 6 * area;
+
+    return { cx, cy, area: Math.abs(area) };
+  }
+
+  // 二次モーメントを計算する関数
+  function calculateMomentOfInertia(vertices) {
+    const centroid = calculateCentroid(vertices);
+    const { cx, cy } = centroid;
+
+    let Ixx = 0;
+    let Iyy = 0;
+    let Ixy = 0;
+
+    for (let i = 0; i < vertices.length; i++) {
+      const j = (i + 1) % vertices.length;
+      const xi = vertices[i].x;
+      const yi = vertices[i].y;
+      const xj = vertices[j].x;
+      const yj = vertices[j].y;
+
+      const common = xi * yj - xj * yi;
+      Ixx += (xi * xi + xi * xj + xj * xj) * common;
+      Iyy += (yi * yi + yi * yj + yj * yj) * common;
+      Ixy += (xi * yj + 2 * xj * yi + xj * yj) * common;
+    }
+
+    Ixx /= 12;
+    Iyy /= 12;
+    Ixy /= 24;
+
+    return { Ixx, Iyy, Ixy };
   }
 
   // 楕円の面積をブラウザに表示
