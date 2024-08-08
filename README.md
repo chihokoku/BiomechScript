@@ -3,7 +3,11 @@
 <div style="text-align: center;">
   <img src="img/img.png" alt="img"　width="200">
 </div>
-<video src="video/how_to_use.mp4" width="300" loop autoplay muted playsinline ></video>
+
+<video width="640" height="360" controls loop muted playsinline>
+    <source src="video/how_to_use.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
 
 ## 目次
 
