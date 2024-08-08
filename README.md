@@ -5,7 +5,7 @@
 </div>
 
 <div style="text-align: center;">
-    <video src="video/how_to_use.mp4" type="video/mp4" controls="true" width="500">
+  <video src="video/video.mp4"  controls></video>
 </div>
 
 ## 目次
