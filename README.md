@@ -3,6 +3,7 @@
 <div style="text-align: center;">
   <img src="img/img.png" alt="img"　width="200">
 </div>
+<video src="video/how_to_use.mp4" width="300" loop autoplay muted playsinline ></video>
 
 ## 目次
 
