@@ -4,10 +4,9 @@
   <img src="img/img.png" alt="img"　width="200">
 </div>
 
-<video width="640" height="360" controls loop muted playsinline>
-    <source src="video/how_to_use.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+<div style="text-align: center;">
+    <video src="video/how_to_use.mp4" type="video/mp4" controls="true" width="500">
+</div>
 
 ## 目次
 
