@@ -1,8 +1,8 @@
-<div style="text-align: center;">
-  <img src="img/img.png" alt="img">
-</div>
-
 # BiomechScript
+
+<div style="text-align: center;">
+  <img src="img/img.png" alt="img"　width="200">
+</div>
 
 ## 目次
 
