@@ -4,9 +4,13 @@
   <img src="img/img.png" alt="img"　width="200">
 </div>
 
-<div style="text-align: center;">
-  <video src="video/video.mp4"  controls></video>
-</div>
+
+https://github.com/user-attachments/assets/707a3a54-471c-423d-9b8c-944e0b85f147
+
+
+https://github.com/user-attachments/assets/eaa7df4f-84d8-4e1b-9099-712eff7fb256
+
+
 
 ## 目次
 
