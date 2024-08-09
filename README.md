@@ -1,13 +1,5 @@
 # BiomechScript
 
-<div style="text-align: center;">
-  <img src="img/img.png" alt="img"　width="200">
-</div>
-
-<div style="text-align: center;">
-  <video src="video/video.mp4"  controls></video>
-</div>
-
 ## 目次
 
 - できること
