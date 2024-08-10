@@ -23,8 +23,8 @@ https://github.com/user-attachments/assets/eaa7df4f-84d8-4e1b-9099-712eff7fb256
 ## 使用方法
 
 0. git clone 等でファイルをローカルに保存
-1. vs コードをインストール
-2. vs コードの拡張機能として Live Server をインストール
+1. <a href="https://code.visualstudio.com/download" target ="_blank">vs code</a> をインストール
+2. vs code の拡張機能として Live Server をインストール
 3. 右下の『Go live』を押す
 
 ## メリット
