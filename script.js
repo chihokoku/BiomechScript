@@ -285,8 +285,8 @@ function init() {
     let centerX = x - canvas3.width / 2; // Canvasの中心のX座標
     let centerY = y - canvas3.height / 2; // Canvasの中心のY座標
 
-    let relativeX = centerX / 6; // Canvas中心を原点とした相対X座標
-    let relativeY = -(centerY / 6); // Canvas中心を原点とした相対Y座標
+    let relativeX = centerX / 6; // Canvas中心を原点とした相対X座標(scaleで割る)
+    let relativeY = -(centerY / 6); // Canvas中心を原点とした相対Y座標(scaleで割る)
 
     points.push({ x: relativeX, y: relativeY });
     if (points.length > 3) alert("Please push reset ");
@@ -312,8 +312,8 @@ function init() {
     const centerX = x - canvas4.width / 2; // Canvasの中心のX座標
     const centerY = y - canvas4.height / 2; // Canvasの中心のY座標
 
-    const relativeX = centerX / 6; // Canvas中心を原点とした相対X座標
-    const relativeY = -(centerY / 6); // Canvas中心を原点とした相対Y座標
+    const relativeX = centerX / 6; // Canvas中心を原点とした相対X座標(scaleで割る)
+    const relativeY = -(centerY / 6); // Canvas中心を原点とした相対Y座標(scaleで割る)
 
     if (points2.length > 14) {
       //配列が10個以上になったらデジタイズできないようにする。配列は０番目も含まれる
