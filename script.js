@@ -1,55 +1,20 @@
+import { initLength } from "./z_length.js";
+import { clipping } from "./clipping.js";
+
 window.addEventListener("DOMContentLoaded", init);
 
 function init() {
-  // シーンの設定
-  const scene1 = new THREE.Scene();
-  const scene2 = new THREE.Scene();
-
-  // レンダラー1の設定
-  const canvas1 = document.querySelector("#canvas1");
-  const renderer1 = new THREE.WebGLRenderer({
-    antialias: true,
-    canvas: canvas1,
-  });
-  const width = 800;
-  const height = 500;
-  renderer1.setSize(width, height);
-
-  // レンダラー2の設定
-  const canvas2 = document.querySelector("#canvas2");
-  const renderer2 = new THREE.WebGLRenderer({
-    antialias: true,
-    canvas: canvas2,
-  });
-  renderer2.setSize(800, 500);
-  renderer2.localClippingEnabled = true;
-
-  // カメラ1の設定
-  const fov = 75;
-  const aspect = 2;
-  const near = 0.1;
-  const far = 500;
-  const camera1 = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  camera1.position.set(0, 0, 100);
-
-  // カメラ1のコントロールができるようにする(オービットコントロールを作成)
-  const controls1 = new THREE.OrbitControls(camera1, canvas1);
-  controls1.enableDamping = true; // 慣性の有効化
-  controls1.dampingFactor = 0.25;
-
-  // カメラ2の設定
-  const camera2 = new THREE.PerspectiveCamera(fov, aspect, near, 800);
-  camera2.position.set(300, 300, -300);
-
-  //カメラ2のコントロールができるようにする(オービットコントロールを作成)
-  const controls2 = new THREE.OrbitControls(camera2, canvas2);
-  controls2.enableDamping = true; // 慣性の有効化
-  controls2.dampingFactor = 0.25;
-
-  // カメラ座標を表示するHTML要素を取得
-  const cameraPositionX = document.getElementById("cameraPositionX");
-  const cameraPositionY = document.getElementById("cameraPositionY");
-  const cameraPositionZ = document.getElementById("cameraPositionZ");
+  // z軸方向の長さを測るcanvas1で使用する変数を展開
+  const {
+    scene1,
+    renderer1,
+    camera1,
+    controls1,
+    cameraPositionX,
+    cameraPositionY,
+    cameraPositionZ,
+  } = initLength();
+  const { scene2, renderer2, camera2, controls2 } = clipping();
 
   // 環境光源を作成
   const ambientLight1 = new THREE.AmbientLight(0xffffff, 0.5);
