@@ -107,8 +107,18 @@ function init() {
 
         // クリッピングされたエッジを取得
         clippedEdges = getClippedEdges(child.geometry, clipPlane);
-        drawOnCanvas(clippedEdges, document.getElementById("canvas3"), "black");
-        drawOnCanvas(clippedEdges, document.getElementById("canvas4"), "black");
+        drawOnCanvas(
+          clippedEdges,
+          document.getElementById("canvas3"),
+          "black",
+          6
+        );
+        drawOnCanvas(
+          clippedEdges,
+          document.getElementById("canvas4"),
+          "black",
+          6
+        );
         console.log("全輪郭線分", clippedEdges);
       }
     });
@@ -203,7 +213,7 @@ function init() {
   }
 
   // クリップされたエッジをキャンバスに描画する関数
-  function drawOnCanvas(edges, canvas, color) {
+  function drawOnCanvas(edges, canvas, color, scale) {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.lineWidth = 3;
@@ -211,7 +221,6 @@ function init() {
     // キャンバスの中心に描画するためのオフセット
     const offsetX = canvas.width / 2;
     const offsetY = canvas.height / 2;
-    const scale = 5; // スケールを調整して描画
 
     // 軸を描画
     drawAxesOnCanvas(ctx, offsetX, offsetY, canvas.width, canvas.height);
@@ -276,8 +285,8 @@ function init() {
     let centerX = x - canvas3.width / 2; // Canvasの中心のX座標
     let centerY = y - canvas3.height / 2; // Canvasの中心のY座標
 
-    let relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
-    let relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
+    let relativeX = centerX / 6; // Canvas中心を原点とした相対X座標
+    let relativeY = -(centerY / 6); // Canvas中心を原点とした相対Y座標
 
     points.push({ x: relativeX, y: relativeY });
     if (points.length > 3) alert("Please push reset ");
@@ -303,8 +312,8 @@ function init() {
     const centerX = x - canvas4.width / 2; // Canvasの中心のX座標
     const centerY = y - canvas4.height / 2; // Canvasの中心のY座標
 
-    const relativeX = centerX / 5; // Canvas中心を原点とした相対X座標
-    const relativeY = -(centerY / 5); // Canvas中心を原点とした相対Y座標
+    const relativeX = centerX / 6; // Canvas中心を原点とした相対X座標
+    const relativeY = -(centerY / 6); // Canvas中心を原点とした相対Y座標
 
     if (points2.length > 14) {
       //配列が10個以上になったらデジタイズできないようにする。配列は０番目も含まれる
@@ -332,11 +341,21 @@ function init() {
     if (clickCount >= 2) {
       // 2回目以降のクリックで実行する処理
       filteredEdges = removeEdgesInsideTriangle2D(filteredEdges, ...points);
-      drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
+      drawOnCanvas(
+        filteredEdges,
+        document.getElementById("canvas3"),
+        "black",
+        6
+      );
     } else {
       // 1回目のクリックで実行する処理
       filteredEdges = removeEdgesInsideTriangle2D(clippedEdges, ...points);
-      drawOnCanvas(filteredEdges, document.getElementById("canvas3"), "black");
+      drawOnCanvas(
+        filteredEdges,
+        document.getElementById("canvas3"),
+        "black",
+        6
+      );
     }
     points.length = 0;
     coordinates1.innerHTML = `Latest Point: x=0.000, y=0.000`;
@@ -411,7 +430,12 @@ function init() {
   const getContour = document.getElementById("getContour");
   getContour.addEventListener("click", function () {
     filteredContour = reconstructContour(filteredEdges);
-    drawOnCanvas(filteredContour, document.getElementById("canvas3"), "purple");
+    drawOnCanvas(
+      filteredContour,
+      document.getElementById("canvas3"),
+      "purple",
+      6
+    );
   });
 
   // 3次元座標間における2点間の距離を計算する関数
@@ -607,7 +631,8 @@ function init() {
   Area.addEventListener("click", function () {
     let { area, vertices } = calculateArea(
       filteredContour,
-      document.getElementById("canvas3")
+      document.getElementById("canvas3"),
+      6
     );
     let moments = calculateMomentOfInertia(vertices);
     surfaceArea.innerHTML = `${area.toFixed(3)}`;
@@ -616,7 +641,7 @@ function init() {
   });
 
   // 面積を計算する関数
-  function calculateArea(contour, canvas) {
+  function calculateArea(contour, canvas, scale) {
     if (contour.length < 3) {
       console.log("length is less than 3");
       return 0;
@@ -641,7 +666,6 @@ function init() {
     const ctx = canvas.getContext("2d");
     const offsetX = canvas.width / 2;
     const offsetY = canvas.height / 2;
-    const scale = 5;
 
     ctx.fillStyle = "#000000"; // ポリゴンの塗りつぶし色
     ctx.beginPath();
@@ -734,11 +758,12 @@ function init() {
       let [I_x_prime, I_y_prime] = transformMoments(I_x, I_y, ellipse.rotation);
       drawEllipse(
         ctx4,
-        ellipse.centerX * 5,
-        ellipse.centerY * 5,
-        ellipse.radiusX * 5,
-        ellipse.radiusY * 5,
-        ellipse.rotation
+        ellipse.centerX * 6,
+        ellipse.centerY * 6,
+        ellipse.radiusX * 6,
+        ellipse.radiusY * 6,
+        ellipse.rotation,
+        6
       );
       // 面積値をブラウザに表示
       ellipseArea.innerHTML = `${area.toFixed(3)}`;
@@ -831,7 +856,7 @@ function init() {
   }
 
   // 楕円を描画する関数
-  function drawEllipse(ctx, x, y, a, b, rotation) {
+  function drawEllipse(ctx, x, y, a, b, rotation, scale) {
     // キャンバスの中心を原点とした座標系に変換
     const centerX = ctx.canvas.width / 2;
     const centerY = ctx.canvas.height / 2;
@@ -855,7 +880,7 @@ function init() {
     ctx.fillStyle = "blue";
     for (let point of points) {
       ctx.beginPath();
-      ctx.arc(point.x * 5, -point.y * 5, 3, 0, 2 * Math.PI);
+      ctx.arc(point.x * scale, -point.y * scale, 3, 0, 2 * Math.PI);
       ctx.fill();
     }
   }
