@@ -4,57 +4,6 @@ import { clipping } from "./components/clipping.js";
 window.addEventListener("DOMContentLoaded", init);
 
 function init() {
-<<<<<<< HEAD
-  // シーンの設定
-  const scene1 = new THREE.Scene();
-  const scene2 = new THREE.Scene();
-
-  // レンダラー1の設定
-  const canvas1 = document.querySelector("#canvas1");
-  const renderer1 = new THREE.WebGLRenderer({
-    antialias: true,
-    canvas: canvas1,
-  });
-  const width = 800;
-  const height = 500;
-  renderer1.setSize(width, height);
-
-  // レンダラー2の設定
-  const canvas2 = document.querySelector("#canvas2");
-  const renderer2 = new THREE.WebGLRenderer({
-    antialias: true,
-    canvas: canvas2,
-  });
-  renderer2.setSize(800, 500);
-  renderer2.localClippingEnabled = true;
-
-  // カメラ1の設定
-  const fov = 75;
-  const aspect = 2;
-  const near = 0.1;
-  const far = 500;
-  const camera1 = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  camera1.position.set(0, 0, 100);
-
-  // カメラ1のコントロールができるようにする(オービットコントロールを作成)
-  const controls1 = new THREE.OrbitControls(camera1, canvas1);
-  controls1.enableDamping = true; // 慣性の有効化
-  controls1.dampingFactor = 0.25;
-
-  // カメラ2の設定
-  const camera2 = new THREE.PerspectiveCamera(fov, aspect, near, 800);
-  camera2.position.set(300, 300, -300);
-
-  //カメラ2のコントロールができるようにする(オービットコントロールを作成)
-  const controls2 = new THREE.OrbitControls(camera2, canvas2);
-  controls2.enableDamping = true; // 慣性の有効化
-  controls2.dampingFactor = 0.25;
-
-  // カメラ座標を表示するHTML要素を取得
-  const cameraPositionX = document.getElementById("cameraPositionX");
-  const cameraPositionY = document.getElementById("cameraPositionY");
-  const cameraPositionZ = document.getElementById("cameraPositionZ");
-=======
   // canvas1で使用する変数を展開
   const {
     scene1,
@@ -66,7 +15,6 @@ function init() {
     cameraPositionZ,
   } = initLength();
   const { scene2, renderer2, camera2, controls2 } = clipping();
->>>>>>> develop
 
   // 環境光源を作成
   const ambientLight1 = new THREE.AmbientLight(0xffffff, 0.5);
@@ -481,7 +429,19 @@ function init() {
   let filteredContour = [];
   const getContour = document.getElementById("getContour");
   getContour.addEventListener("click", function () {
-    filteredContour = reconstructContour(filteredEdges);
+    filteredContour = reconstructContour(filteredEdges, 0);
+    drawOnCanvas(
+      filteredContour,
+      document.getElementById("canvas3"),
+      "purple",
+      6
+    );
+  });
+
+  // getContourX関数を実行した時の処理
+  const getContourX = document.getElementById("getContourX");
+  getContourX.addEventListener("click", function () {
+    filteredContour = reconstructContour(filteredEdges, 1);
     drawOnCanvas(
       filteredContour,
       document.getElementById("canvas3"),
@@ -550,26 +510,28 @@ function init() {
   }
 
   // 断面の輪郭を再構成し、繋がっていない線分を補完する関数
-  function reconstructContour(edges) {
+  function reconstructContour(edges, argument) {
     if (edges.length === 0) return [];
 
-    // 最大Y座標の点を見つける
-    let maxYPoint = findMaxYPoint(edges);
-
-    // 最大Y座標の点を含むエッジを見つける
-    let initialEdgeIndex = edges.findIndex(
-      ([start, end]) =>
-        (start.x === maxYPoint.x &&
-          start.y === maxYPoint.y &&
-          start.z === maxYPoint.z) ||
-        (end.x === maxYPoint.x &&
-          end.y === maxYPoint.y &&
-          end.z === maxYPoint.z)
-    );
-
-    // 最大Y座標の点が見つからなかった場合、最大X座標の点を探す
-    if (initialEdgeIndex === -1) {
-      let maxXPoint = findMaxXPoint(edges);
+    let initialEdgeIndex = [];
+    let maxYPoint = [];
+    let maxXPoint = [];
+    if (argument == 0) {
+      // 最大Y座標の点を見つける
+      maxYPoint = findMaxYPoint(edges);
+      // 最大Y座標の点を含むエッジを見つける
+      initialEdgeIndex = edges.findIndex(
+        ([start, end]) =>
+          (start.x === maxYPoint.x &&
+            start.y === maxYPoint.y &&
+            start.z === maxYPoint.z) ||
+          (end.x === maxYPoint.x &&
+            end.y === maxYPoint.y &&
+            end.z === maxYPoint.z)
+      );
+    } else {
+      // 最大Y座標の点が見つからなかった場合、最大X座標の点を探す
+      maxXPoint = findMaxXPoint(edges);
       initialEdgeIndex = edges.findIndex(
         ([start, end]) =>
           (start.x === maxXPoint.x &&
