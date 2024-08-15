@@ -13,7 +13,7 @@
     <script src="https://unpkg.com/three@0.147.0/examples/js/loaders/OBJLoader.js"></script>
     <!-- 行列計算で使用するライブラリを読み込む -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css" />
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -56,7 +56,7 @@
         <section class="crossSection">
           <div class="left">
             <h2>近位方向から見た断面図(外輪郭計算用)</h2>
-            <canvas id="canvas3" width="400" height="400"></canvas>
+            <canvas id="canvas3" width="500" height="500"></canvas>
             <div class="btn">
               <button id="removeEdges">remove edges</button>
               <button id="getContour">get contour</button>
@@ -86,7 +86,7 @@
         <section class="ellipse">
           <div class="left">
             <h2>近位方向から見た断面図(楕円近似用)</h2>
-            <canvas id="canvas4" width="400" height="400"></canvas>
+            <canvas id="canvas4" width="500" height="500"></canvas>
             <div class="btn">
               <button id="ellipse">ellipse</button>
               <button id="reset2">reset</button>
