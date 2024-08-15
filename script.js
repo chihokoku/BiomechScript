@@ -516,6 +516,7 @@ function init() {
     let initialEdgeIndex = [];
     let maxYPoint = [];
     let maxXPoint = [];
+
     if (argument == 0) {
       // 最大Y座標の点を見つける
       maxYPoint = findMaxYPoint(edges);
