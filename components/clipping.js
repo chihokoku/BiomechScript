@@ -15,7 +15,7 @@ export function clipping() {
   const fov = 75;
   const aspect = 2;
   const near = 0.1;
-  const far = 800;
+  const far = 1000;
 
   // カメラ2の設定
   const camera2 = new THREE.PerspectiveCamera(fov, aspect, near, far);

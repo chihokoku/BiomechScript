@@ -16,7 +16,7 @@ export function initLength() {
   const fov = 75;
   const aspect = 2;
   const near = 0.1;
-  const far = 500;
+  const far = 1000;
   const camera1 = new THREE.PerspectiveCamera(fov, aspect, near, far);
   camera1.position.set(0, 0, 100);
 

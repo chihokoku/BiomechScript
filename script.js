@@ -1,10 +1,10 @@
-import { initLength } from "./z_length.js";
-import { clipping } from "./clipping.js";
+import { initLength } from "./components/z_length.js";
+import { clipping } from "./components/clipping.js";
 
 window.addEventListener("DOMContentLoaded", init);
 
 function init() {
-  // z軸方向の長さを測るcanvas1で使用する変数を展開
+  // canvas1で使用する変数を展開
   const {
     scene1,
     renderer1,
@@ -92,7 +92,7 @@ function init() {
   // clippingを使用して断面を取得する
   let clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
   // clippingHelperを使用してどこでclippingしてるか可視化する
-  const planeHelper = new THREE.PlaneHelper(clipPlane, 70, 0xff0000);
+  const planeHelper = new THREE.PlaneHelper(clipPlane, 150, 0xff0000);
   scene2.add(planeHelper);
   // ボタンを押したら断面を取得
   const clipButton = document.getElementById("clipButton");
