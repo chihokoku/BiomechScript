@@ -255,7 +255,7 @@ function init() {
     ctx.stroke();
   }
 
-  // 点列を描画する関数
+  // 点列を描画する関数(配列統合後)
   function drawPoints(points, canvas, scale) {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // キャンバスをクリア
     ctx.strokeStyle = "purple"; // 線の色
@@ -473,7 +473,7 @@ function init() {
     );
   }
 
-  // 断面の輪郭を再構成し、繋がっていない線分を補完する関数
+  // 断面を形成する点群をソーティングする関数
   function reconstructContour(edges) {
     if (edges.length === 0) return [];
 
@@ -493,6 +493,8 @@ function init() {
       let nearestPoint = null;
       let minDistance = Infinity;
 
+      // 任意の点Pから一番近い点を探索するためのループ
+      // for文はその区間の処理が全て終わらないと次の処理に行かない→allPointsのi=3とかでif(nearestPoint)に行かない
       allPoints.forEach((point) => {
         if (!visitedPoints.includes(point)) {
           const dist = distance3D(currentPoint, point);
@@ -505,6 +507,7 @@ function init() {
 
       // 最も近い点を訪問リストに追加し、現在の点を更新
       if (nearestPoint) {
+        //nearestPointがnullでないか確認
         visitedPoints.push(nearestPoint);
         currentPoint = nearestPoint;
       }
@@ -513,7 +516,7 @@ function init() {
     return visitedPoints;
   }
 
-  // シューの公式を使用して面積を計算する関数
+  // シューの公式を使用して面積を計算する関数(配列統合後)
   function calculatePolygonArea(points) {
     let area = 0;
     const n = points.length;
@@ -521,15 +524,12 @@ function init() {
     for (let i = 0; i < n; i++) {
       const { x: x1, y: y1 } = points[i];
       const { x: x2, y: y2 } = points[(i + 1) % n]; // 次の点、最後は最初の点と結ぶ
-
-      // 面積計算
       area += x1 * y2 - x2 * y1;
     }
-    // 面積の絶対値を取り、2で割る
     return Math.abs(area) / 2;
   }
 
-  // 面積部分を黒く塗りつぶす関数
+  // 面積部分を黒く塗りつぶす関数(配列統合後)
   function fillArea(points, canvas, scale) {
     const ctx = canvas.getContext("2d");
     const offsetX = canvas.width / 2;
