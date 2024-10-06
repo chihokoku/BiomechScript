@@ -36,3 +36,9 @@ https://github.com/user-attachments/assets/eaa7df4f-84d8-4e1b-9099-712eff7fb256
 ## コンタクト
 
 - e-mail：chihokoku8060@gmail.com
+
+# コードの説明
+
+## コンポーネント化について
+
+- 本プログラムには４つの canvas が使用されている。それぞれの canvas についてコンポーネント化されている。
