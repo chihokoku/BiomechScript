@@ -448,11 +448,13 @@ function init() {
       );
   });
 
-  // getContour関数を実行した時の処理
+  // sortContour関数を実行した時の処理
   let filteredContour = [];
-  const getContour = document.getElementById("getContour");
-  getContour.addEventListener("click", function () {
-    filteredContour = reconstructContour(filteredEdges);
+  const sortContour = document.getElementById("sortContour");
+  sortContour.addEventListener("click", function () {
+    let flatPoints = changeFlatEdges(filteredEdges);
+    console.log("重複点を削除:", flatPoints);
+    filteredContour = reconstructContour(flatPoints);
     console.log("ソーティング後の配列", filteredContour);
     drawPoints(filteredContour, document.getElementById("canvas3"), 6);
   });
@@ -473,29 +475,45 @@ function init() {
     );
   }
 
-  // 断面を形成する点群をソーティングする関数
-  function reconstructContour(edges) {
-    if (edges.length === 0) return [];
-
+  //線分情報を点情報に変換して重複した点情報を削除
+  function changeFlatEdges(edges) {
     // すべての点を一つの配列に統合
     const allPoints = edges.flat();
     console.log("統合した配列:", allPoints);
 
-    ///////////////
+    // 重複した点を削除する
+    const flatPoints = [];
+    const seen = new Set();
+    allPoints.forEach((point) => {
+      const key = `${point.x},${point.y}`; // x, yの値をキーとして扱う
+      if (!seen.has(key)) {
+        // 同じ座標がまだセットされていない場合
+        seen.add(key);
+        flatPoints.push(point); // 重複なしの配列に追加
+      }
+    });
+
+    return flatPoints;
+  }
+
+  // 断面を形成する点群をソーティングする関数
+  function reconstructContour(points) {
+    if (points.length === 0) return [];
+
     const visitedPoints = []; // 訪れた点を記録する配列(ソーティング後の配列)
-    let currentPoint = findMaxYPoint(allPoints); // 最大Y座標を持つ点から開始
+    let currentPoint = findMaxYPoint(points); // 最大Y座標を持つ点から開始
     console.log("統合した配列の最大Y:", currentPoint);
     visitedPoints.push(currentPoint); // 最初の点を訪れた点に追加
 
     // 探索ループ：全ての点を訪問するまで繰り返す
-    while (visitedPoints.length < allPoints.length) {
+    while (visitedPoints.length < points.length) {
       // 現在の点から最も近い未探索の点を探す
       let nearestPoint = null;
       let minDistance = Infinity;
 
       // 任意の点Pから一番近い点を探索するためのループ
       // for文はその区間の処理が全て終わらないと次の処理に行かない→allPointsのi=3とかでif(nearestPoint)に行かない
-      allPoints.forEach((point) => {
+      points.forEach((point) => {
         if (!visitedPoints.includes(point)) {
           const dist = distance3D(currentPoint, point);
           if (dist < minDistance) {
