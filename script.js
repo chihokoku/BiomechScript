@@ -559,7 +559,6 @@ function init() {
     for (let i = 1; i < points.length; i++) {
       ctx.lineTo(points[i].x * scale + offsetX, -points[i].y * scale + offsetY);
     }
-
     ctx.closePath();
     ctx.fillStyle = "black";
     ctx.fill(); // 閉鎖空間を黒く塗りつぶす
