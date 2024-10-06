@@ -398,6 +398,7 @@ function init() {
   }
 
   // 点が三角形の内部にあるかどうかを判断する関数 (z値を無視)
+  // バリセンター座標を使用
   function isPointInTriangle2D(point, v0, v1, v2) {
     let alpha =
       ((v1.y - v2.y) * (point.x - v2.x) + (v2.x - v1.x) * (point.y - v2.y)) /
