@@ -274,6 +274,8 @@ function init() {
         ctx.lineTo(x * scale + offsetX, -y * scale + offsetY); // 前の点から線を引く
       }
     }
+    let { x: firstX, y: firstY } = points[0];
+    ctx.lineTo(firstX * scale + offsetX, -firstY * scale + offsetY); // 最初の点に戻る
     ctx.stroke(); // 線を描画
     drawAxesOnCanvas(ctx, offsetX, offsetY, canvas.width, canvas.height);
   }
