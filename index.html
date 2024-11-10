@@ -11,8 +11,8 @@
     <script src="https://unpkg.com/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
     <!-- objファイルを表示させるためのCDN -->
     <script src="https://unpkg.com/three@0.147.0/examples/js/loaders/OBJLoader.js"></script>
-    <!-- 行列計算で使用するライブラリを読み込む -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+    <!-- excelファイル出力するためのCDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
     <script type="module" src="script.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css" />
     <link rel="stylesheet" href="style.css" />
@@ -65,22 +65,33 @@
             </div>
           </div>
           <div class="right">
-            <h2 class="title">・座標</h2>
-            <ul>
-              <span id="coordinates1"></span>
-            </ul>
-            <h2 class="title">・断面積</h2>
-            <ul>
-              <span id="surfaceArea"></span>
-            </ul>
-            <h2 class="title">・二次モーメント(x軸周り)</h2>
-            <ul>
-              <span id="InertiaMomentX"></span>
-            </ul>
-            <h2 class="title">・二次モーメント(y軸周り)</h2>
-            <ul>
-              <span id="InertiaMomentY"></span>
-            </ul>
+            <span class="title">・座標:</span>
+            <span id="coordinates1"></span><br />
+            <span class="title">・断面積</span>
+            <span id="surfaceArea"></span><br />
+            <span class="title">・二次モーメント(x軸周り)</span>
+            <span id="InertiaMomentX"></span><br />
+            <span class="title">・二次モーメント(y軸周り)</span>
+            <span id="InertiaMomentY"></span>
+            <div class="table">
+              <button id="addRowTotable">add row to table</button>
+            </div>
+            <!-- 計算結果を表示するテーブル -->
+            <table id="resultTable">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>z値</th>
+                  <th>面積</th>
+                  <th>削除</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 計算結果はここに追加される -->
+              </tbody>
+            </table>
+            <!-- Excelにエクスポートするボタン -->
+            <button id="exportButton">export Excel</button>
           </div>
         </section>
         <section class="ellipse">

@@ -48,6 +48,22 @@ header .inner {
 }
 .wrapper .crossSection .right .title {
   margin-top: 30px;
+  font-size: 20px;
+}
+.wrapper .crossSection .right .table {
+  margin: 0 0 40px;
+}
+.wrapper .crossSection .right #resultTable {
+  border: solid 2px gray;
+  border-spacing: 0;
+  border-radius: 10px;
+}
+.wrapper .crossSection .right #resultTable th {
+  padding: 0 40px;
+}
+.wrapper .crossSection .right #resultTable td {
+  text-align: center;
+  border-top: solid 2px gray;
 }
 .wrapper .ellipse {
   display: flex;
