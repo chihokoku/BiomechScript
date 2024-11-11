@@ -388,7 +388,10 @@ function init() {
     points.length = 0;
     coordinates1.innerHTML = `Latest Point: x=0.000, y=0.000`;
     surfaceArea.innerHTML = `0.000`;
+    centroidCoordinates.innerHTML = `0.000`;
     clickCount = 0;
+    // 座標系をリセット(clearRectは最終的な座標系の部分しか消さないため)
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     document
       .getElementById("canvas3")
       .getContext("2d")
@@ -557,7 +560,7 @@ function init() {
   firstMomentOfArea.addEventListener("click", function () {
     centroid = calculateCentroid(sortedPoints, area);
     console.log("重心:", centroid);
-    // 円を描画
+    // 図心を描画
     ctx.beginPath();
     ctx.arc(
       centroid.x * 6 + canvas3.width / 2,
@@ -568,10 +571,39 @@ function init() {
     );
     ctx.fillStyle = "black";
     ctx.fill();
-    centroidCoordinates.innerHTML = `x=${centroid.x.toFixed(
+    centroidCoordinates.innerHTML = `${centroid.x.toFixed(
       3
-    )}, y=${centroid.y.toFixed(3)}`;
+    )}, ${centroid.y.toFixed(3)}`;
   });
+
+  const rotate = document.getElementById("rotate");
+  rotate.addEventListener("click", function () {
+    const angleInput = document.getElementById("angleInput").value;
+    let angle = parseFloat(angleInput); // 入力された角度を取得
+    drawStick(angle, centroid, canvas3); // 入力された角度で棒を描画
+  });
+
+  // 棒を描画する関数
+  function drawStick(angleInDegrees, point, canvas) {
+    const stickLength = 300; // 棒の長さ（例：5cm）
+    // 重心を中心に棒を並行移動
+    ctx.translate(
+      centroid.x * 6 + canvas.width / 2,
+      -centroid.y * 6 + canvas.height / 2
+    );
+    // y軸を反転させる(translateでそもそもy軸が反転しているから)
+    ctx.scale(1, -1); // y軸の反転
+    // 回転の指定
+    ctx.rotate((angleInDegrees * Math.PI) / 180); // 角度をラジアンに変換して回転
+    // 棒を描く（長さ100pxの線）
+    ctx.beginPath();
+    ctx.moveTo(-stickLength / 2, 0); // 棒の始点を中心から-25pxに
+    ctx.lineTo(stickLength / 2, 0); // 棒の終点を中心から+25pxに
+    ctx.strokeStyle = "blue";
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.restore();
+  }
 
   function calculateCentroid(points, area) {
     let Qx = 0; // y軸に関する断面一次モーメント
@@ -588,17 +620,14 @@ function init() {
       Qx += (y0 + y1) * crossProduct;
       Qy += (x0 + x1) * crossProduct;
     }
-
     // 最後の点と最初の点で計算を閉じる
     const x0 = points[points.length - 1].x;
     const y0 = points[points.length - 1].y;
     const x1 = points[0].x;
     const y1 = points[0].y;
     const crossProduct = x0 * y1 - x1 * y0;
-
     Qx += (y0 + y1) * crossProduct;
     Qy += (x0 + x1) * crossProduct;
-
     // 全体の断面一次モーメントの合計値を面積で割って重心座標を計算
     const centroidX = Qy / (6 * area);
     const centroidY = Qx / (6 * area);
