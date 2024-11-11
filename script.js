@@ -260,15 +260,14 @@ function init() {
   //                   任意の輪郭点から面積などを計算するプログラム
   // ***********************************************************************
   // 点列を描画する関数(配列統合後)
-  function drawPoints(points, canvas, scale) {
+  function drawPointSequence(points, canvas, color, scale) {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // キャンバスをクリア
-    ctx.strokeStyle = "purple"; // 線の色
+    ctx.strokeStyle = color; // 線の色
     ctx.lineWidth = 2; // 線の太さ
     ctx.beginPath(); // 点列を描画
     // キャンバスの中心に描画するためのオフセット
     const offsetX = canvas.width / 2;
     const offsetY = canvas.height / 2;
-
     for (let i = 0; i < points.length; i++) {
       const { x, y } = points[i];
       // 線を描画
@@ -322,7 +321,7 @@ function init() {
     ctx.arc(x, y, 2, 0, 2 * Math.PI);
     ctx.fillStyle = "red";
     ctx.fill();
-    displayCoordinates(points, coordinates1);
+    displayCoordinates(points, coordinates1); // 座標をブラウザに表示する関数
     console.log(points);
   }
 
@@ -403,30 +402,54 @@ function init() {
 
   // sortContour関数を実行した時の処理
   let filteredContour = [];
+  let sortedPoints = [];
   const sortContour = document.getElementById("sortContour");
   sortContour.addEventListener("click", function () {
+    //重複した点を削除する
     let flatPoints = changeFlatEdges(filteredEdges);
     console.log("重複点を削除:", flatPoints);
-    filteredContour = reconstructContour(flatPoints);
-    console.log("ソーティング後の配列", filteredContour);
-    drawPoints(filteredContour, document.getElementById("canvas3"), 6);
+    // filteredContour = reconstructContour(flatPoints);距離で探索
+    sortedPoints = sortPoints(flatPoints);
+    console.log("ソーティング後の配列", sortedPoints);
+    drawPointSequence(
+      sortedPoints,
+      document.getElementById("canvas3"),
+      "purple",
+      6
+    );
   });
 
-  // 3次元座標間における2点間の距離を計算する関数
-  function distance3D(point1, point2) {
-    return Math.sqrt(
-      Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2)
-    );
+  function sortPoints(points) {
+    // 点列の中心点を計算
+    const centroid = {
+      x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+      y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
+    };
+    // 中心点からの角度で点をソートし、sortingPointsに格納
+    const sortingPoints = points.slice().sort((a, b) => {
+      const angleA = Math.atan2(a.y - centroid.y, a.x - centroid.x);
+      const angleB = Math.atan2(b.y - centroid.y, b.x - centroid.x);
+      return angleA - angleB;
+    });
+    // ソートされた点列を返す
+    return sortingPoints;
   }
 
-  // 最大Y座標を持つ点を見つける関数
-  function findMaxYPoint(points) {
-    return points.reduce(
-      (maxPoint, currentPoint) =>
-        currentPoint.y > maxPoint.y ? currentPoint : maxPoint,
-      points[0]
-    );
-  }
+  // // 3次元座標間における2点間の距離を計算する関数
+  // function distance3D(point1, point2) {
+  //   return Math.sqrt(
+  //     Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2)
+  //   );
+  // }
+
+  // // 最大Y座標を持つ点を見つける関数
+  // function findMaxYPoint(points) {
+  //   return points.reduce(
+  //     (maxPoint, currentPoint) =>
+  //       currentPoint.y > maxPoint.y ? currentPoint : maxPoint,
+  //     points[0]
+  //   );
+  // }
 
   //線分情報を点情報に変換して重複した点情報を削除
   function changeFlatEdges(edges) {
@@ -449,49 +472,45 @@ function init() {
     return flatPoints;
   }
 
-  // 断面を形成する点群をソーティングする関数
-  function reconstructContour(points) {
-    if (points.length === 0) return [];
+  // // 断面を形成する点群をソーティングする関数
+  // function reconstructContour(points) {
+  //   if (points.length === 0) return [];
+  //   const visitedPoints = []; // 訪れた点を記録する配列(ソーティング後の配列)
+  //   let currentPoint = findMaxYPoint(points); // 最大Y座標を持つ点から開始
+  //   console.log("統合した配列の最大Y:", currentPoint);
+  //   visitedPoints.push(currentPoint); // 最初の点を訪れた点に追加
 
-    const visitedPoints = []; // 訪れた点を記録する配列(ソーティング後の配列)
-    let currentPoint = findMaxYPoint(points); // 最大Y座標を持つ点から開始
-    console.log("統合した配列の最大Y:", currentPoint);
-    visitedPoints.push(currentPoint); // 最初の点を訪れた点に追加
+  //   // 探索ループ：全ての点を訪問するまで繰り返す
+  //   while (visitedPoints.length < points.length) {
+  //     // 現在の点から最も近い未探索の点を探す
+  //     let nearestPoint = null;
+  //     let minDistance = Infinity;
 
-    // 探索ループ：全ての点を訪問するまで繰り返す
-    while (visitedPoints.length < points.length) {
-      // 現在の点から最も近い未探索の点を探す
-      let nearestPoint = null;
-      let minDistance = Infinity;
-
-      // 任意の点Pから一番近い点を探索するためのループ
-      // for文はその区間の処理が全て終わらないと次の処理に行かない→allPointsのi=3とかでif(nearestPoint)に行かない
-      points.forEach((point) => {
-        if (!visitedPoints.includes(point)) {
-          const dist = distance3D(currentPoint, point);
-          if (dist < minDistance) {
-            minDistance = dist;
-            nearestPoint = point;
-          }
-        }
-      });
-
-      // 最も近い点を訪問リストに追加し、現在の点を更新
-      if (nearestPoint) {
-        //nearestPointがnullでないか確認
-        visitedPoints.push(nearestPoint);
-        currentPoint = nearestPoint;
-      }
-    }
-
-    return visitedPoints;
-  }
+  //     // 任意の点Pから一番近い点を探索するためのループ
+  //     // for文はその区間の処理が全て終わらないと次の処理に行かない→allPointsのi=3とかでif(nearestPoint)に行かない
+  //     points.forEach((point) => {
+  //       if (!visitedPoints.includes(point)) {
+  //         const dist = distance3D(currentPoint, point);
+  //         if (dist < minDistance) {
+  //           minDistance = dist;
+  //           nearestPoint = point;
+  //         }
+  //       }
+  //     });
+  //     // 最も近い点を訪問リストに追加し、現在の点を更新
+  //     if (nearestPoint) {
+  //       //nearestPointがnullでないか確認
+  //       visitedPoints.push(nearestPoint);
+  //       currentPoint = nearestPoint;
+  //     }
+  //   }
+  //   return visitedPoints;
+  // }
 
   // シューの公式を使用して面積を計算する関数(配列統合後)
   function calculatePolygonArea(points) {
     let area = 0;
     const n = points.length;
-
     for (let i = 0; i < n; i++) {
       const { x: x1, y: y1 } = points[i];
       const { x: x2, y: y2 } = points[(i + 1) % n]; // 次の点、最後は最初の点と結ぶ
@@ -500,28 +519,26 @@ function init() {
     return Math.abs(area) / 2;
   }
 
-  // 面積部分を黒く塗りつぶす関数(配列統合後)
+  // 面積部分を塗りつぶす関数(配列統合後)
   function fillArea(points, canvas, scale) {
     const ctx = canvas.getContext("2d");
     const offsetX = canvas.width / 2;
     const offsetY = canvas.height / 2;
     ctx.beginPath();
     ctx.moveTo(points[0].x * scale + offsetX, -points[0].y * scale + offsetY);
-
     for (let i = 1; i < points.length; i++) {
       ctx.lineTo(points[i].x * scale + offsetX, -points[i].y * scale + offsetY);
     }
-
     ctx.closePath();
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "rgba(0, 255, 255, 0.5)";
     ctx.fill(); // 閉鎖空間を黒く塗りつぶす
   }
 
   // 面積値にデフォルト値として入力
   const surfaceArea = document.getElementById("surfaceArea");
   surfaceArea.innerHTML = `0.000`;
-  const InertiaMomentX = document.getElementById("InertiaMomentX");
-  InertiaMomentX.innerHTML = `0.000`;
+  const centroidCoordinates = document.getElementById("centroidCoordinates");
+  centroidCoordinates.innerHTML = `0.000`;
   const InertiaMomentY = document.getElementById("InertiaMomentY");
   InertiaMomentY.innerHTML = `0.000`;
 
@@ -529,22 +546,75 @@ function init() {
   let area = 0;
   const Area = document.getElementById("calculateArea");
   Area.addEventListener("click", function () {
-    area = calculatePolygonArea(filteredContour);
-    fillArea(filteredContour, document.getElementById("canvas3"), 6);
+    area = calculatePolygonArea(sortedPoints);
+    fillArea(sortedPoints, document.getElementById("canvas3"), 6);
     surfaceArea.innerHTML = `${area.toFixed(3)}`;
-    // InertiaMomentX.innerHTML = `${moments.Ixx.toFixed(3)}`;
-    // InertiaMomentY.innerHTML = `${moments.Iyy.toFixed(3)}`;
   });
 
+  // 断面一次モーメントを用いて図心を求める
+  let centroid = [];
+  const firstMomentOfArea = document.getElementById("firstMomentOfArea");
+  firstMomentOfArea.addEventListener("click", function () {
+    centroid = calculateCentroid(sortedPoints, area);
+    console.log("重心:", centroid);
+    // 円を描画
+    ctx.beginPath();
+    ctx.arc(
+      centroid.x * 6 + canvas3.width / 2,
+      -centroid.y * 6 + canvas3.height / 2,
+      4,
+      0,
+      2 * Math.PI
+    );
+    ctx.fillStyle = "black";
+    ctx.fill();
+    centroidCoordinates.innerHTML = `x=${centroid.x.toFixed(
+      3
+    )}, y=${centroid.y.toFixed(3)}`;
+  });
+
+  function calculateCentroid(points, area) {
+    let Qx = 0; // y軸に関する断面一次モーメント
+    let Qy = 0; // x軸に関する断面一次モーメント
+    // 点列データを用いて断面一次モーメントを計算
+    for (let i = 0; i < points.length - 1; i++) {
+      const x0 = points[i].x;
+      const y0 = points[i].y;
+      const x1 = points[i + 1].x;
+      const y1 = points[i + 1].y;
+      // 多角形の辺ごとの微小面積（外積を使った三角形面積の寄与）を計算
+      const crossProduct = x0 * y1 - x1 * y0;
+      // 断面一次モーメントの計算
+      Qx += (y0 + y1) * crossProduct;
+      Qy += (x0 + x1) * crossProduct;
+    }
+
+    // 最後の点と最初の点で計算を閉じる
+    const x0 = points[points.length - 1].x;
+    const y0 = points[points.length - 1].y;
+    const x1 = points[0].x;
+    const y1 = points[0].y;
+    const crossProduct = x0 * y1 - x1 * y0;
+
+    Qx += (y0 + y1) * crossProduct;
+    Qy += (x0 + x1) * crossProduct;
+
+    // 全体の断面一次モーメントの合計値を面積で割って重心座標を計算
+    const centroidX = Qy / (6 * area);
+    const centroidY = Qx / (6 * area);
+    return { x: centroidX, y: centroidY };
+  }
+
+  // テーブルに計算結果を表示させるプログラム
   let tableRowCount = 0;
   const addRowTotable = document.getElementById("addRowTotable");
   addRowTotable.addEventListener("click", function () {
     tableRowCount++; // tableに表示させるNo
     let tableRowArea = area.toFixed(3); //tableに表示させる面積値
-    addRowToTable(tableRowCount, zPosition, tableRowArea); // 結果をテーブルに追加
+    addRowToTable(tableRowCount, zPosition, tableRowArea, centroid); // 結果をテーブルに追加
   });
 
-  function addRowToTable(count, valueZposition, valueArea) {
+  function addRowToTable(count, valueZposition, valueArea, point) {
     // テーブルのtbody部分を取得
     let tableBody = document
       .getElementById("resultTable")
@@ -552,17 +622,16 @@ function init() {
 
     // 新しい行を作成
     let newRow = tableBody.insertRow(); // insertRow() で新しい行を追加
-
     // 新しいセルを作成してデータを追加
     let cell1 = newRow.insertCell(0); // 回数セル
-    let cell2 = newRow.insertCell(1);
-    let cell3 = newRow.insertCell(2); // 計算結果セル
-    let cell4 = newRow.insertCell(3); // 削除ボタンセル
-
-    cell1.innerHTML = count; // 回数を設定
-    cell2.innerHTML = valueZposition;
-    cell3.innerHTML = valueArea; // 計算結果を設定
-
+    let cell2 = newRow.insertCell(1); // z値セル
+    let cell3 = newRow.insertCell(2); // 面積計算結果セル
+    let cell4 = newRow.insertCell(3); // 重心
+    let cell5 = newRow.insertCell(4);
+    cell1.innerHTML = count; //回数を設定
+    cell2.innerHTML = valueZposition; //z値
+    cell3.innerHTML = valueArea; //計算結果を設定
+    cell4.innerHTML = `${point.x.toFixed(3)},${point.y.toFixed(3)}`; //重心
     // 削除ボタンを作成してセルに追加
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "delete";
@@ -570,7 +639,7 @@ function init() {
       // 行を削除
       newRow.remove(); // newRow自体を削除
     });
-    cell4.appendChild(deleteButton);
+    cell5.appendChild(deleteButton);
   }
 
   // Excelにエクスポートする関数
@@ -669,7 +738,7 @@ function init() {
     ctx4.arc(x, y, 2, 0, 2 * Math.PI);
     ctx4.fillStyle = "red";
     ctx4.fill();
-    displayCoordinates(points2, coordinates2);
+    displayCoordinates(points2, coordinates2); // 座標をブラウザに表示する関数
     console.log(points);
   });
 
