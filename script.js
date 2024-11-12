@@ -554,7 +554,7 @@ function init() {
     surfaceArea.innerHTML = `${area.toFixed(3)}`;
   });
 
-  // 断面一次モーメントを用いて図心を求める
+  // 重心を格納する
   let centroid = [];
   const firstMomentOfArea = document.getElementById("firstMomentOfArea");
   firstMomentOfArea.addEventListener("click", function () {
@@ -576,11 +576,19 @@ function init() {
     )}, ${centroid.y.toFixed(3)}`;
   });
 
-  const rotate = document.getElementById("rotate");
-  rotate.addEventListener("click", function () {
+  // 角度変化値を読み込んで断面二次モーメントを計算
+  const SecondMomentOfArea = document.getElementById("SecondMomentOfArea");
+  SecondMomentOfArea.addEventListener("click", function () {
     const angleInput = document.getElementById("angleInput").value;
     let angle = parseFloat(angleInput); // 入力された角度を取得
     drawStick(angle, centroid, canvas3); // 入力された角度で棒を描画
+    let momentOfInertia = calculateMomentOfInertiaAroundCentroid(
+      sortedPoints,
+      centroid,
+      angle
+    );
+    console.log("Ix:", momentOfInertia.Ix);
+    console.log("Ix_rotated:", momentOfInertia.Ix_rotated);
   });
 
   // 棒を描画する関数
@@ -605,9 +613,15 @@ function init() {
     ctx.restore();
   }
 
+  // 断面一次モーメントを用いて図心を求める
+  // 断面一次モーメントSは下記で求められる
+  //                  x軸まわり Sx=∮ydA=Gy*A      Gy:図形の重心y座標, dA:微小面積, A:図形の全体面積
+  //                  y軸まわり Sy=∮xdA=Gx*A      Gx:図形の重心x座標
+  // step1:SxとSyを求める(積分計算で)
+  // step2:重心座標を求める Gy=Sx/a
   function calculateCentroid(points, area) {
-    let Qx = 0; // y軸に関する断面一次モーメント
-    let Qy = 0; // x軸に関する断面一次モーメント
+    let Sx = 0; // y軸に関する断面一次モーメント
+    let Sy = 0; // x軸に関する断面一次モーメント
     // 点列データを用いて断面一次モーメントを計算
     for (let i = 0; i < points.length - 1; i++) {
       const x0 = points[i].x;
@@ -617,8 +631,8 @@ function init() {
       // 多角形の辺ごとの微小面積（外積を使った三角形面積の寄与）を計算
       const crossProduct = x0 * y1 - x1 * y0;
       // 断面一次モーメントの計算
-      Qx += (y0 + y1) * crossProduct;
-      Qy += (x0 + x1) * crossProduct;
+      Sx += (y0 + y1) * crossProduct;
+      Sy += (x0 + x1) * crossProduct;
     }
     // 最後の点と最初の点で計算を閉じる
     const x0 = points[points.length - 1].x;
@@ -626,12 +640,74 @@ function init() {
     const x1 = points[0].x;
     const y1 = points[0].y;
     const crossProduct = x0 * y1 - x1 * y0;
-    Qx += (y0 + y1) * crossProduct;
-    Qy += (x0 + x1) * crossProduct;
+    Sx += (y0 + y1) * crossProduct;
+    Sy += (x0 + x1) * crossProduct;
     // 全体の断面一次モーメントの合計値を面積で割って重心座標を計算
-    const centroidX = Qy / (6 * area);
-    const centroidY = Qx / (6 * area);
-    return { x: centroidX, y: centroidY };
+    const Gx = Sy / (6 * area);
+    const Gy = Sx / (6 * area);
+    return { x: Gx, y: Gy };
+  }
+
+  // 重心周りの断面二次モーメントを計算する
+  function calculateMomentOfInertiaAroundCentroid(
+    points,
+    centroid,
+    angleInDegrees
+  ) {
+    let Ix = 0; // x軸に関する断面二次モーメント
+    let Iy = 0; // y軸に関する断面二次モーメント
+    let Ixy = 0; // x, y軸に関する断面二次モーメント（ねじれ成分）
+
+    // ラジアンに変換
+    let angleInRadians = (angleInDegrees * Math.PI) / 180;
+
+    // 点列を重心座標系に並行移動し、モーメントを計算
+    for (let i = 0; i < points.length - 1; i++) {
+      // 現在の点と次の点を取得
+      let x0 = points[i].x - centroid.x;
+      let y0 = points[i].y - centroid.y;
+      let x1 = points[i + 1].x - centroid.x;
+      let y1 = points[i + 1].y - centroid.y;
+
+      // 外積を使って微小エリアを計算（多角形の部分面積として）
+      let crossProduct = x0 * y1 - x1 * y0;
+
+      // 各軸に関する断面二次モーメントを計算
+      Ix += (y0 * y0 + y0 * y1 + y1 * y1) * crossProduct;
+      Iy += (x0 * x0 + x0 * x1 + x1 * x1) * crossProduct;
+      Ixy += (x0 * y1 + 2 * x0 * y0 + 2 * x1 * y1 + x1 * y0) * crossProduct;
+    }
+
+    // 最後の点と最初の点で計算を閉じる
+    let x0 = points[points.length - 1].x - centroid.x;
+    let y0 = points[points.length - 1].y - centroid.y;
+    let x1 = points[0].x - centroid.x;
+    let y1 = points[0].y - centroid.y;
+    let crossProduct = x0 * y1 - x1 * y0;
+
+    Ix += (y0 * y0 + y0 * y1 + y1 * y1) * crossProduct;
+    Iy += (x0 * x0 + x0 * x1 + x1 * x1) * crossProduct;
+    Ixy += (x0 * y1 + 2 * x0 * y0 + 2 * x1 * y1 + x1 * y0) * crossProduct;
+
+    // モーメントを 1/12 によってスケール（公式の定数）
+    Ix = Math.abs(Ix / 12);
+    Iy = Math.abs(Iy / 12);
+    Ixy = Math.abs(Ixy / 24);
+
+    // 回転後の断面二次モーメントを計算
+    let Ix_rotated =
+      Ix * Math.cos(angleInRadians) ** 2 +
+      Iy * Math.sin(angleInRadians) ** 2 -
+      2 * Ixy * Math.sin(angleInRadians) * Math.cos(angleInRadians);
+    let Iy_rotated =
+      Ix * Math.sin(angleInRadians) ** 2 +
+      Iy * Math.cos(angleInRadians) ** 2 +
+      2 * Ixy * Math.sin(angleInRadians) * Math.cos(angleInRadians);
+    let Ixy_rotated =
+      (Iy - Ix) * Math.sin(angleInRadians) * Math.cos(angleInRadians) +
+      Ixy * (Math.cos(angleInRadians) ** 2 - Math.sin(angleInRadians) ** 2);
+
+    return { Ix_rotated, Iy_rotated, Ixy_rotated, Ix };
   }
 
   // テーブルに計算結果を表示させるプログラム
