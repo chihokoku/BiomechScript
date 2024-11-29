@@ -4,17 +4,22 @@ html {
 section {
   margin-bottom: 50px;
 }
+h2 {
+  color: rgb(126, 204, 252);
+}
 button {
   padding: 5px;
-  border: 2px solid gray;
+  border: 2px solid rgb(126, 204, 252);
   border-radius: 5px;
+  color: gray;
 }
 header {
   width: 100%;
+  padding: 20px 0;
   position: fixed;
   top: 0;
   left: 0;
-  border-bottom: 1px solid black;
+  border-bottom: 2px solid rgb(126, 204, 252);
   background-color: white;
   z-index: 50;
   .inner {
@@ -23,13 +28,17 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    h1 {
+      font-family: "Oooh Baby", cursive;
+      font-weight: 700px;
+      color: rgb(126, 204, 252);
+    }
   }
 }
 .wrapper {
   width: 90%;
-  margin: 0 auto;
+  margin: 50px auto 0;
   padding-top: 60px;
-
   .clipping {
     .position {
       input {
@@ -39,29 +48,60 @@ header {
   }
   .crossSection {
     display: flex;
+    padding: 30px 0;
     .left {
-      margin-right: 20%;
+      margin-right: 10%;
     }
     #canvas3 {
-      border: 2px solid black;
+      border: 2px solid rgb(200, 200, 200);
+      border-radius: 20px;
+    }
+    input {
+      border-bottom: 2px solid gray;
     }
     .right {
+      width: 60%;
+      padding-top: 30px;
+      border-radius: 20px;
+      background-color: #ebf9ff;
       .title {
         margin-top: 30px;
+        font-size: 20px;
+      }
+      .table {
+        margin: 0 0 60px;
+      }
+      #resultTable {
+        border: solid 2px rgb(200, 200, 200);
+        border-spacing: 0;
+        border-radius: 10px;
+        th {
+          width: 25%;
+        }
+        td {
+          text-align: center;
+          border-top: solid 2px rgb(200, 200, 200);
+        }
       }
     }
   }
   .ellipse {
     display: flex;
     .left {
-      margin-right: 20%;
+      margin-right: 10%;
     }
     #canvas4 {
-      border: 2px solid black;
+      border: 2px solid rgb(200, 200, 200);
+      border-radius: 20px;
     }
     .right {
+      width: 60%;
+      padding-top: 30px;
+      background-color: #ebf9ff;
+      border-radius: 20px;
       .title {
         margin-top: 30px;
+        font-size: 20px;
       }
     }
   }
