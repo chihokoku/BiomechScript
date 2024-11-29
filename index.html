@@ -16,6 +16,13 @@
     <script type="module" src="script.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css" />
     <link rel="stylesheet" href="style.css" />
+    <!-- タイトルのフォントの設定 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Oooh+Baby&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <header>
@@ -29,14 +36,14 @@
     <main>
       <div class="wrapper">
         <section class="zLength">
-          <h2>骨の長さを計算する画面</h2>
+          <h2>Calculating length of Z-Position</h2>
           <canvas id="canvas1"></canvas>
           <div class="calculateLength">
-            <button id="z_length_btn">calculate z_length</button>
-            <span>z_length=</span><span id="z_length"></span>
+            <button id="z_length_btn">calculate z-length</button>
+            <span>z-length=</span><span id="z_length"></span>
           </div>
           <div class="cameraPosition">
-            <span>カメラ座標</span>
+            <span>Camera Coordinates</span>
             <span id="cameraPositionX"></span>
             <span id="cameraPositionY"></span>
             <span id="cameraPositionZ"></span>
@@ -44,10 +51,10 @@
         </section>
 
         <section class="clipping">
-          <h2>断面を取得する画面</h2>
+          <h2>Getting Cross-Section</h2>
           <canvas id="canvas2"></canvas>
           <div class="position">
-            <label for="zPosition">Z Position(正の値):</label>
+            <label for="zPosition">z-coordinate:</label>
             <input type="number" id="zPosition" value="0" step="0.1" />
             <button id="clipButton">Show Cross Section</button>
           </div>
@@ -55,27 +62,31 @@
 
         <section class="crossSection">
           <div class="left">
-            <h2>近位方向から見た断面図(外輪郭計算用)</h2>
+            <h2>
+              Cross-Section from the proximal <br />
+              direction
+            </h2>
             <canvas id="canvas3" width="500" height="500"></canvas>
             <div class="btn">
               <button id="removeEdges">remove edges</button>
-              <button id="sortContour">sort contour</button>
+              <button id="sortContour">sorting</button>
               <button id="calculateArea">area</button>
               <button id="firstMomentOfArea">first moment of area</button><br />
               <label>degrees:</label>
               <input type="number" id="angleInput" value="0" />
-              <button id="SecondMomentOfArea">Second moment of area</button>
+              <button id="SecondMomentOfArea">Second moment of area</button
+              ><br />
               <button id="reset">reset</button>
             </div>
           </div>
           <div class="right">
-            <span class="title">・座標:</span>
+            <span class="title">・coordinate:</span>
             <span id="coordinates1"></span><br />
-            <span class="title">・断面積</span>
+            <span class="title">・cross-section area</span>
             <span id="surfaceArea"></span><br />
-            <span class="title">・重心座標</span>
+            <span class="title">・barycentric coordinates</span>
             <span id="centroidCoordinates"></span><br />
-            <span class="title">・二次モーメント(y軸周り)</span>
+            <span class="title">・second moment of area(y-axis)</span>
             <span id="InertiaMomentY"></span>
             <div class="table">
               <button id="addRowTotable">add row to table</button>
@@ -85,10 +96,10 @@
               <thead>
                 <tr>
                   <th>No</th>
-                  <th>z値</th>
-                  <th>面積</th>
-                  <th>重心</th>
-                  <th>削除</th>
+                  <th>Z-P</th>
+                  <th>Area</th>
+                  <th>Barycentric</th>
+                  <th>Delete</th>
                 </tr>
               </thead>
               <tbody>
@@ -101,7 +112,10 @@
         </section>
         <section class="ellipse">
           <div class="left">
-            <h2>近位方向から見た断面図(楕円近似用)</h2>
+            <h2>
+              Cross-Section from the proximal <br />
+              direction(for ellipse)
+            </h2>
             <canvas id="canvas4" width="500" height="500"></canvas>
             <div class="btn">
               <button id="ellipse">ellipse</button>
@@ -109,22 +123,14 @@
             </div>
           </div>
           <div class="right">
-            <h2 class="title">・座標</h2>
-            <ul>
-              <span id="coordinates2"></span>
-            </ul>
-            <h2 class="title">・断面積</h2>
-            <ul>
-              <span id="ellipseArea"></span>
-            </ul>
-            <h2 class="title">・楕円の二次モーメント(x軸周り)</h2>
-            <ul>
-              <span id="ellipseInertiaX"></span>
-            </ul>
-            <h2 class="title">・楕円の二次モーメント(y軸周り)</h2>
-            <ul>
-              <span id="ellipseInertiaY"></span>
-            </ul>
+            <span class="title">・座標</span><span id="coordinates2"></span
+            ><br />
+            <span class="title">・断面積</span><span id="ellipseArea"></span
+            ><br />
+            <span class="title">・楕円の二次モーメント(x軸周り)</span
+            ><span id="ellipseInertiaX"></span><br />
+            <span class="title">・楕円の二次モーメント(y軸周り)</span
+            ><span id="ellipseInertiaY"></span>
           </div>
         </section>
       </div>

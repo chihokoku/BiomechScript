@@ -6,18 +6,24 @@ section {
   margin-bottom: 50px;
 }
 
+h2 {
+  color: rgb(126, 204, 252);
+}
+
 button {
   padding: 5px;
-  border: 2px solid gray;
+  border: 2px solid rgb(126, 204, 252);
   border-radius: 5px;
+  color: gray;
 }
 
 header {
   width: 100%;
+  padding: 20px 0;
   position: fixed;
   top: 0;
   left: 0;
-  border-bottom: 1px solid black;
+  border-bottom: 2px solid rgb(126, 204, 252);
   background-color: white;
   z-index: 50;
 }
@@ -28,10 +34,15 @@ header .inner {
   justify-content: space-between;
   align-items: center;
 }
+header .inner h1 {
+  font-family: "Oooh Baby", cursive;
+  font-weight: 700px;
+  color: rgb(126, 204, 252);
+}
 
 .wrapper {
   width: 90%;
-  margin: 0 auto;
+  margin: 50px auto 0;
   padding-top: 60px;
 }
 .wrapper .clipping .position input {
@@ -39,44 +50,60 @@ header .inner {
 }
 .wrapper .crossSection {
   display: flex;
+  padding: 30px 0;
 }
 .wrapper .crossSection .left {
-  margin-right: 20%;
+  margin-right: 10%;
 }
 .wrapper .crossSection #canvas3 {
-  border: 2px solid black;
+  border: 2px solid rgb(200, 200, 200);
+  border-radius: 20px;
 }
 .wrapper .crossSection input {
   border-bottom: 2px solid gray;
+}
+.wrapper .crossSection .right {
+  width: 60%;
+  padding-top: 30px;
+  border-radius: 20px;
+  background-color: #ebf9ff;
 }
 .wrapper .crossSection .right .title {
   margin-top: 30px;
   font-size: 20px;
 }
 .wrapper .crossSection .right .table {
-  margin: 0 0 40px;
+  margin: 0 0 60px;
 }
 .wrapper .crossSection .right #resultTable {
-  border: solid 2px gray;
+  border: solid 2px rgb(200, 200, 200);
   border-spacing: 0;
   border-radius: 10px;
 }
 .wrapper .crossSection .right #resultTable th {
-  padding: 0 40px;
+  width: 25%;
 }
 .wrapper .crossSection .right #resultTable td {
   text-align: center;
-  border-top: solid 2px gray;
+  border-top: solid 2px rgb(200, 200, 200);
 }
 .wrapper .ellipse {
   display: flex;
 }
 .wrapper .ellipse .left {
-  margin-right: 20%;
+  margin-right: 10%;
 }
 .wrapper .ellipse #canvas4 {
-  border: 2px solid black;
+  border: 2px solid rgb(200, 200, 200);
+  border-radius: 20px;
+}
+.wrapper .ellipse .right {
+  width: 60%;
+  padding-top: 30px;
+  background-color: #ebf9ff;
+  border-radius: 20px;
 }
 .wrapper .ellipse .right .title {
   margin-top: 30px;
+  font-size: 20px;
 }/*# sourceMappingURL=style.css.map */

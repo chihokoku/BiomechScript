@@ -90,7 +90,7 @@ function init() {
   // 断面の輪郭情報を格納する変数
   let clippedEdges = [];
   // clippingを使用して断面を取得する
-  let clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+  let clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
   // clippingHelperを使用してどこでclippingしてるか可視化する
   const planeHelper = new THREE.PlaneHelper(clipPlane, 150, 0xff0000);
   scene2.add(planeHelper);
@@ -101,6 +101,7 @@ function init() {
   function updateClipPlane() {
     zPosition = parseFloat(document.getElementById("zPosition").value);
     clipPlane.constant = zPosition;
+    console.log("clipping値:", clipPlane.constant);
     scene2.traverse((child) => {
       if (child.isMesh) {
         child.material.clippingPlanes = [clipPlane];
