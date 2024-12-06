@@ -440,22 +440,6 @@ function init() {
     return sortingPoints;
   }
 
-  // // 3次元座標間における2点間の距離を計算する関数
-  // function distance3D(point1, point2) {
-  //   return Math.sqrt(
-  //     Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2)
-  //   );
-  // }
-
-  // // 最大Y座標を持つ点を見つける関数
-  // function findMaxYPoint(points) {
-  //   return points.reduce(
-  //     (maxPoint, currentPoint) =>
-  //       currentPoint.y > maxPoint.y ? currentPoint : maxPoint,
-  //     points[0]
-  //   );
-  // }
-
   //線分情報を点情報に変換して重複した点情報を削除
   function changeFlatEdges(edges) {
     // すべての点を一つの配列に統合
@@ -476,6 +460,22 @@ function init() {
 
     return flatPoints;
   }
+
+  // // 3次元座標間における2点間の距離を計算する関数
+  // function distance3D(point1, point2) {
+  //   return Math.sqrt(
+  //     Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2)
+  //   );
+  // }
+
+  // // 最大Y座標を持つ点を見つける関数
+  // function findMaxYPoint(points) {
+  //   return points.reduce(
+  //     (maxPoint, currentPoint) =>
+  //       currentPoint.y > maxPoint.y ? currentPoint : maxPoint,
+  //     points[0]
+  //   );
+  // }
 
   // // 断面を形成する点群をソーティングする関数
   // function reconstructContour(points) {
@@ -656,68 +656,6 @@ function init() {
   }
 
   // 重心周りの断面二次モーメントを計算する
-  // function calculateMomentOfInertiaAroundCentroid(
-  //   points,
-  //   centroid,
-  //   angleInDegrees
-  // ) {
-  //   let Ix = 0; // x軸に関する断面二次モーメント
-  //   let Iy = 0; // y軸に関する断面二次モーメント
-  //   let Ixy = 0; // x, y軸に関する断面二次モーメント（ねじれ成分）
-
-  //   // ラジアンに変換
-  //   let angleInRadians = (angleInDegrees * Math.PI) / 180;
-
-  //   // 点列を重心座標系に並行移動し、モーメントを計算
-  //   for (let i = 0; i < points.length - 1; i++) {
-  //     // 現在の点と次の点を取得
-  //     let x0 = points[i].x - centroid.x;
-  //     let y0 = points[i].y - centroid.y;
-  //     let x1 = points[i + 1].x - centroid.x;
-  //     let y1 = points[i + 1].y - centroid.y;
-
-  //     // 外積を使って微小エリアを計算（多角形の部分面積として）
-  //     let crossProduct = x0 * y1 - x1 * y0;
-
-  //     // 各軸に関する断面二次モーメントを計算
-  //     Ix += (y0 * y0 + y0 * y1 + y1 * y1) * crossProduct;
-  //     Iy += (x0 * x0 + x0 * x1 + x1 * x1) * crossProduct;
-  //     Ixy += (x0 * y1 + 2 * x0 * y0 + 2 * x1 * y1 + x1 * y0) * crossProduct;
-  //   }
-
-  //   // 最後の点と最初の点で計算を閉じる
-  //   let x0 = points[points.length - 1].x - centroid.x;
-  //   let y0 = points[points.length - 1].y - centroid.y;
-  //   let x1 = points[0].x - centroid.x;
-  //   let y1 = points[0].y - centroid.y;
-  //   let crossProduct = x0 * y1 - x1 * y0;
-
-  //   Ix += (y0 * y0 + y0 * y1 + y1 * y1) * crossProduct;
-  //   Iy += (x0 * x0 + x0 * x1 + x1 * x1) * crossProduct;
-  //   Ixy += (x0 * y1 + 2 * x0 * y0 + 2 * x1 * y1 + x1 * y0) * crossProduct;
-
-  //   // モーメントを 1/12 によってスケール（公式の定数）
-  //   Ix = Math.abs(Ix / 12);
-  //   Iy = Math.abs(Iy / 12);
-  //   Ixy = Math.abs(Ixy / 24);
-
-  //   // 回転後の断面二次モーメントを計算
-  //   let Ix_rotated =
-  //     Ix * Math.cos(angleInRadians) ** 2 +
-  //     Iy * Math.sin(angleInRadians) ** 2 -
-  //     2 * Ixy * Math.sin(angleInRadians) * Math.cos(angleInRadians);
-  //   let Iy_rotated =
-  //     Ix * Math.sin(angleInRadians) ** 2 +
-  //     Iy * Math.cos(angleInRadians) ** 2 +
-  //     2 * Ixy * Math.sin(angleInRadians) * Math.cos(angleInRadians);
-  //   let Ixy_rotated =
-  //     (Iy - Ix) * Math.sin(angleInRadians) * Math.cos(angleInRadians) +
-  //     Ixy * (Math.cos(angleInRadians) ** 2 - Math.sin(angleInRadians) ** 2);
-
-  //   return { Ix_rotated, Iy_rotated, Ixy_rotated, Ix };
-  // }
-
-  // 重心周りの断面二次モーメントを計算する
   function calculateMomentOfInertiaAroundCentroid(
     points,
     centroid,
@@ -813,9 +751,9 @@ function init() {
     cell1.innerHTML = count; //回数を設定
     cell2.innerHTML = valueZposition; //z値
     cell3.innerHTML = valueArea; //計算結果を設定
-    cell4.innerHTML = `${point.x.toFixed(3)},${point.y.toFixed(3)}`; //重心
-    cell5.innerHTML = `${inertia.Ix.toFixed(3)}`;
-    cell6.innerHTML = `${inertia.Iy.toFixed(3)}`;
+    cell4.innerHTML = `${point.x.toFixed(2)},${point.y.toFixed(2)}`; //重心
+    cell5.innerHTML = inertia.Ix.toFixed(2);
+    cell6.innerHTML = inertia.Iy.toFixed(2);
     // 削除ボタンを作成してセルに追加
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "delete";
