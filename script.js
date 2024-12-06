@@ -101,12 +101,13 @@ function init() {
   function updateClipPlane() {
     zPosition = parseFloat(document.getElementById("zPosition").value);
     clipPlane.constant = zPosition;
-    console.log("clipping値:", clipPlane.constant);
+    // scene2に追加されていオブジェクトを呼び出す
     scene2.traverse((child) => {
+      // オブジェクトがメッシュであるか確認
       if (child.isMesh) {
+        // 以下の二行でclippingができるように設定
         child.material.clippingPlanes = [clipPlane];
         child.material.clipIntersection = true;
-
         // クリッピングされたエッジを取得
         clippedEdges = getClippedEdges(child.geometry, clipPlane);
         drawOnCanvas(
@@ -538,11 +539,13 @@ function init() {
     ctx.fill(); // 閉鎖空間を黒く塗りつぶす
   }
 
-  // 面積値にデフォルト値として入力
+  // 画面出力値にデフォルト値を入力
   const surfaceArea = document.getElementById("surfaceArea");
   surfaceArea.innerHTML = `0.000`;
   const centroidCoordinates = document.getElementById("centroidCoordinates");
   centroidCoordinates.innerHTML = `0.000`;
+  const InertiaMomentX = document.getElementById("InertiaMomentX");
+  InertiaMomentX.innerHTML = `0.000`;
   const InertiaMomentY = document.getElementById("InertiaMomentY");
   InertiaMomentY.innerHTML = `0.000`;
 
@@ -578,41 +581,44 @@ function init() {
   });
 
   // 角度変化値を読み込んで断面二次モーメントを計算
+  let momentOfInertia = 0;
   const SecondMomentOfArea = document.getElementById("SecondMomentOfArea");
   SecondMomentOfArea.addEventListener("click", function () {
     const angleInput = document.getElementById("angleInput").value;
     let angle = parseFloat(angleInput); // 入力された角度を取得
-    drawStick(angle, centroid, canvas3); // 入力された角度で棒を描画
-    let momentOfInertia = calculateMomentOfInertiaAroundCentroid(
+    // drawStick(angle, centroid, canvas3); // 入力された角度で棒を描画
+    momentOfInertia = calculateMomentOfInertiaAroundCentroid(
       sortedPoints,
       centroid,
       angle
     );
+    InertiaMomentX.innerHTML = `${momentOfInertia.Ix.toFixed(3)}`;
+    InertiaMomentY.innerHTML = `${momentOfInertia.Iy.toFixed(3)}`;
     console.log("Ix:", momentOfInertia.Ix);
     console.log("Ix_rotated:", momentOfInertia.Ix_rotated);
   });
 
   // 棒を描画する関数
-  function drawStick(angleInDegrees, point, canvas) {
-    const stickLength = 300; // 棒の長さ（例：5cm）
-    // 重心を中心に棒を並行移動
-    ctx.translate(
-      centroid.x * 6 + canvas.width / 2,
-      -centroid.y * 6 + canvas.height / 2
-    );
-    // y軸を反転させる(translateでそもそもy軸が反転しているから)
-    ctx.scale(1, -1); // y軸の反転
-    // 回転の指定
-    ctx.rotate((angleInDegrees * Math.PI) / 180); // 角度をラジアンに変換して回転
-    // 棒を描く（長さ100pxの線）
-    ctx.beginPath();
-    ctx.moveTo(-stickLength / 2, 0); // 棒の始点を中心から-25pxに
-    ctx.lineTo(stickLength / 2, 0); // 棒の終点を中心から+25pxに
-    ctx.strokeStyle = "blue";
-    ctx.lineWidth = 5;
-    ctx.stroke();
-    ctx.restore();
-  }
+  // function drawStick(angleInDegrees, point, canvas) {
+  //   const stickLength = 300; // 棒の長さ（例：5cm）
+  //   // 重心を中心に棒を並行移動
+  //   ctx.translate(
+  //     centroid.x * 6 + canvas.width / 2,
+  //     -centroid.y * 6 + canvas.height / 2
+  //   );
+  //   // y軸を反転させる(translateでそもそもy軸が反転しているから)
+  //   ctx.scale(1, -1); // y軸の反転
+  //   // 回転の指定
+  //   ctx.rotate((angleInDegrees * Math.PI) / 180); // 角度をラジアンに変換して回転
+  //   // 棒を描く（長さ100pxの線）
+  //   ctx.beginPath();
+  //   ctx.moveTo(-stickLength / 2, 0); // 棒の始点を中心から-25pxに
+  //   ctx.lineTo(stickLength / 2, 0); // 棒の終点を中心から+25pxに
+  //   ctx.strokeStyle = "blue";
+  //   ctx.lineWidth = 5;
+  //   ctx.stroke();
+  //   ctx.restore();
+  // }
 
   // 断面一次モーメントを用いて図心を求める
   // 断面一次モーメントSは下記で求められる
@@ -720,7 +726,6 @@ function init() {
     let Ix = 0; // x軸に関する断面二次モーメント
     let Iy = 0; // y軸に関する断面二次モーメント
     let Ixy = 0; // x, y軸に関する断面二次モーメント（ねじれ成分）
-
     // ラジアンに変換
     const angleInRadians = (angleInDegrees * Math.PI) / 180;
 
@@ -755,7 +760,7 @@ function init() {
     // スケーリング（1/36で割る）
     Ix /= 36;
     Iy /= 36;
-    Ixy /= 72; // Ixyに1/72の係数を適用
+    Ixy /= 72;
 
     // 回転後の断面二次モーメントを計算
     const Ix_rotated =
@@ -770,7 +775,7 @@ function init() {
       (Iy - Ix) * Math.sin(angleInRadians) * Math.cos(angleInRadians) +
       Ixy * (Math.cos(angleInRadians) ** 2 - Math.sin(angleInRadians) ** 2);
 
-    return { Ix_rotated, Iy_rotated, Ixy_rotated, Ix };
+    return { Ix_rotated, Iy_rotated, Ixy_rotated, Ix, Iy };
   }
 
   // テーブルに計算結果を表示させるプログラム
@@ -779,10 +784,17 @@ function init() {
   addRowTotable.addEventListener("click", function () {
     tableRowCount++; // tableに表示させるNo
     let tableRowArea = area.toFixed(3); //tableに表示させる面積値
-    addRowToTable(tableRowCount, zPosition, tableRowArea, centroid); // 結果をテーブルに追加
+    addRowToTable(
+      tableRowCount,
+      zPosition,
+      tableRowArea,
+      centroid,
+      momentOfInertia
+    ); // 結果をテーブルに追加
   });
 
-  function addRowToTable(count, valueZposition, valueArea, point) {
+  // テーブルにカラムを追加する関数
+  function addRowToTable(count, valueZposition, valueArea, point, inertia) {
     // テーブルのtbody部分を取得
     let tableBody = document
       .getElementById("resultTable")
@@ -795,11 +807,15 @@ function init() {
     let cell2 = newRow.insertCell(1); // z値セル
     let cell3 = newRow.insertCell(2); // 面積計算結果セル
     let cell4 = newRow.insertCell(3); // 重心
-    let cell5 = newRow.insertCell(4);
+    let cell5 = newRow.insertCell(4); //x軸周りの二次モーメント
+    let cell6 = newRow.insertCell(5); //y軸周りの二次モーメント
+    let cell7 = newRow.insertCell(6);
     cell1.innerHTML = count; //回数を設定
     cell2.innerHTML = valueZposition; //z値
     cell3.innerHTML = valueArea; //計算結果を設定
     cell4.innerHTML = `${point.x.toFixed(3)},${point.y.toFixed(3)}`; //重心
+    cell5.innerHTML = `${inertia.Ix.toFixed(3)}`;
+    cell6.innerHTML = `${inertia.Iy.toFixed(3)}`;
     // 削除ボタンを作成してセルに追加
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "delete";
@@ -807,7 +823,7 @@ function init() {
       // 行を削除
       newRow.remove(); // newRow自体を削除
     });
-    cell5.appendChild(deleteButton);
+    cell7.appendChild(deleteButton);
   }
 
   // Excelにエクスポートする関数

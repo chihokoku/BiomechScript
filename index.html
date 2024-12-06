@@ -87,6 +87,8 @@
             <span id="surfaceArea"></span><br />
             <span class="title">・barycentric coordinates</span>
             <span id="centroidCoordinates"></span><br />
+            <span class="title">・second moment of area(x-axis)</span>
+            <span id="InertiaMomentX"></span><br />
             <span class="title">・second moment of area(y-axis)</span>
             <span id="InertiaMomentY"></span>
             <div class="table">
@@ -96,10 +98,15 @@
             <table id="resultTable">
               <thead>
                 <tr>
-                  <th>No</th>
-                  <th>Z-P</th>
-                  <th>Area</th>
+                  <th id="no">No</th>
+                  <th id="z-p">Z-P</th>
+                  <th id="area">Area</th>
                   <th>Barycentric</th>
+                  <th>
+                    SMA<br />
+                    (x-axis)
+                  </th>
+                  <th>SMA<br />(y-axis)</th>
                   <th>Delete</th>
                 </tr>
               </thead>
