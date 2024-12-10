@@ -676,7 +676,7 @@ function init() {
       const y1 = points[i + 1].y - centroid.y;
 
       // 外積を使って微小エリアを計算（多角形の部分面積として）
-      const crossProduct = x0 * y1 - x1 * y0;
+      const crossProduct = 1 / 2(x0 * y1 - x1 * y0);
 
       // 各軸に関する断面二次モーメントを計算
       Ix += (y0 * y0 + y0 * y1 + y1 * y1) * crossProduct;
