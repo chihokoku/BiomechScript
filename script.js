@@ -689,7 +689,7 @@ function init() {
     const y0 = points[points.length - 1].y - centroid.y;
     const x1 = points[0].x - centroid.x;
     const y1 = points[0].y - centroid.y;
-    const crossProduct = x0 * y1 - x1 * y0;
+    const crossProduct = 1 / 2(x0 * y1 - x1 * y0);
 
     Ix += (y0 * y0 + y0 * y1 + y1 * y1) * crossProduct;
     Iy += (x0 * x0 + x0 * x1 + x1 * x1) * crossProduct;
