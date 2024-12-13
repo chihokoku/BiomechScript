@@ -635,9 +635,9 @@ function init() {
       const y0 = points[i].y;
       const x1 = points[i + 1].x;
       const y1 = points[i + 1].y;
-      // 多角形の辺ごとの微小面積（外積を使った三角形面積の寄与）を計算
+      // 多角形の辺ごとの微小三角形の面積を計算
       const crossProduct = x0 * y1 - x1 * y0;
-      // 断面一次モーメントの計算
+      // 断面一次モーメントの計算、(y0 + y1)には+0が省略さており重心を表す
       Sx += (y0 + y1) * crossProduct;
       Sy += (x0 + x1) * crossProduct;
     }
@@ -676,7 +676,7 @@ function init() {
       const y1 = points[i + 1].y - centroid.y;
 
       // 外積を使って微小エリアを計算（多角形の部分面積として）
-      const crossProduct = 1 / 2(x0 * y1 - x1 * y0);
+      const crossProduct = 0.5 * (x0 * y1 - x1 * y0);
 
       // 各軸に関する断面二次モーメントを計算
       Ix += (y0 * y0 + y0 * y1 + y1 * y1) * crossProduct;
@@ -689,7 +689,7 @@ function init() {
     const y0 = points[points.length - 1].y - centroid.y;
     const x1 = points[0].x - centroid.x;
     const y1 = points[0].y - centroid.y;
-    const crossProduct = 1 / 2(x0 * y1 - x1 * y0);
+    const crossProduct = 0.5 * (x0 * y1 - x1 * y0);
 
     Ix += (y0 * y0 + y0 * y1 + y1 * y1) * crossProduct;
     Iy += (x0 * x0 + x0 * x1 + x1 * x1) * crossProduct;
