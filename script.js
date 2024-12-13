@@ -584,7 +584,8 @@ function init() {
   let momentOfInertia = 0;
   const SecondMomentOfArea = document.getElementById("SecondMomentOfArea");
   SecondMomentOfArea.addEventListener("click", function () {
-    const angleInput = document.getElementById("angleInput").value;
+    let angleInput = 0;
+    angleInput = document.getElementById("angleInput").value;
     let angle = parseFloat(angleInput); // 入力された角度を取得
     // drawStick(angle, centroid, canvas3); // 入力された角度で棒を描画
     momentOfInertia = calculateMomentOfInertiaAroundCentroid(
@@ -774,60 +775,6 @@ function init() {
     // Excelファイルとして保存
     XLSX.writeFile(workbook, "result.xlsx");
   });
-
-  // ポリゴンの重心を計算する関数
-  // function calculateCentroid(vertices) {
-  //   let cx = 0;
-  //   let cy = 0;
-  //   let area = 0;
-
-  //   for (let i = 0; i < vertices.length; i++) {
-  //     const j = (i + 1) % vertices.length;
-  //     const xi = vertices[i].x;
-  //     const yi = vertices[i].y;
-  //     const xj = vertices[j].x;
-  //     const yj = vertices[j].y;
-
-  //     const common = xi * yj - xj * yi;
-  //     cx += (xi + xj) * common;
-  //     cy += (yi + yj) * common;
-  //     area += common;
-  //   }
-  //   area /= 2;
-  //   cx /= 6 * area;
-  //   cy /= 6 * area;
-
-  //   return { cx, cy, area: Math.abs(area) };
-  // }
-
-  // 二次モーメントを計算する関数
-  // function calculateMomentOfInertia(vertices) {
-  //   const centroid = calculateCentroid(vertices);
-  //   const { cx, cy } = centroid;
-
-  //   let Ixx = 0;
-  //   let Iyy = 0;
-  //   let Ixy = 0;
-
-  //   for (let i = 0; i < vertices.length; i++) {
-  //     const j = (i + 1) % vertices.length;
-  //     const xi = vertices[i].x;
-  //     const yi = vertices[i].y;
-  //     const xj = vertices[j].x;
-  //     const yj = vertices[j].y;
-
-  //     const common = xi * yj - xj * yi;
-  //     Ixx += (xi * xi + xi * xj + xj * xj) * common;
-  //     Iyy += (yi * yi + yi * yj + yj * yj) * common;
-  //     Ixy += (xi * yj + 2 * xj * yi + xj * yj) * common;
-  //   }
-
-  //   Ixx /= 12;
-  //   Iyy /= 12;
-  //   Ixy /= 24;
-
-  //   return { Ixx, Iyy, Ixy };
-  // }
 
   // *********************************************************************
   //                   デジタイズ点を楕円近似するプログラム
